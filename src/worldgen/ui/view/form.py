@@ -4,8 +4,10 @@ shows up with no change here. No raylib: the tree is tested without a window.
 - Each widget's id is its field's YAML path (`elevation.noise.octaves`, `biomes.rules[3].ground.color[1]`), so
   an event maps back to the field with no lookup table (`field_target`). The parts of one field add a suffix: the
   check box turning a field left out on and off is `.on`, a section's header `.header`, a stepper's buttons
-  `.minus` and `.plus`, a biome toggle `.<id>.pick`. Labels hang off the same path (`.label`, `.about`,
-  `.problem0`) and emit nothing.
+  `.minus` and `.plus`, a biome toggle `.<id>.pick`. Labels hang off the same path (`.label`, `.problem0`) and
+  emit nothing.
+- A field's or section's help (its description, what turning it up or down does, its bounds) is its name's or
+  header's tooltip, never text on the form: a long form stays a list of names and boxes.
 - Text boxes keep what was typed, valid or not, with the problem under them.
 - Nested sections are titled panels, or, given `FormOptions.opened`, headers that open and close (a long form).
 - Biome rules are the world tool's to draw (`FormOptions.rules`), with its rules for moving them; a form that
@@ -67,7 +69,6 @@ class FormOptions:
     """How to draw the form: the recipe it shows, and what the tool adds to the specs."""
 
     recipe: Recipe
-    descriptions: bool = True  # under each field; otherwise its name's tooltip
     defaults: Mapping[FieldPath, Mapping[str, float]] = field(default_factory=dict)  # greyed for a WEIGHTS key left out
     notes: Mapping[FieldPath, str] = field(default_factory=dict)  # beside a field's box: what its value comes to
     choices: tuple[str, ...] = ()  # what a PICK field picks from: the recipe's biome ids
@@ -76,12 +77,10 @@ class FormOptions:
 
 
 def form_tree(section: SectionSpec, options: FormOptions, path: FieldPath) -> Column:
-    """The section's description and fields top to bottom, nested sections in panels or under headers. Raises
+    """The section's fields top to bottom, nested sections in panels or under headers. Raises
     TypeError on a field kind it has no widget for."""
     widget_id = yaml_path(path)
     children: list[Node] = []
-    if options.descriptions and section.description:
-        children.append(about(widget_id, section.description))
     if section.optional and options.recipe.get(path) is None:
         children.append(Label(f"{widget_id}.unset", "(not set)", size=SMALL, tone="muted"))
         return Column(children=children)
@@ -105,7 +104,7 @@ def section_tree(section: SectionSpec, options: FormOptions, path: FieldPath) ->
             body.children.insert(0, Row(children=[on, Label(f"{widget_id}.on.label", "set", size=SMALL, tone="muted")]))
         return Panel(body, title=section.title)
     opened = options.opened(path, True)
-    header: list[Node] = [header_button(widget_id, section.title, opened)]
+    header: list[Node] = [header_button(widget_id, section.title, opened, section.description)]
     if not opened and problems_below(recipe, path):
         header.append(Label(f"{widget_id}.flag", "has problems", size=SMALL, tone="error"))
     if section.optional:
@@ -116,9 +115,11 @@ def section_tree(section: SectionSpec, options: FormOptions, path: FieldPath) ->
     return Column(children=children)
 
 
-def header_button(widget_id: str, title: str, opened: bool) -> Button:
-    """A section's title, reading from the left, with an arrow saying whether it is open; a click opens or closes it."""
-    return Button(f"{widget_id}.{HEADER}", f"{OPEN_ARROW if opened else CLOSED_ARROW}{title}", align="left", weight=1)
+def header_button(widget_id: str, title: str, opened: bool, description: str = "") -> Button:
+    """A section's title, reading from the left, with an arrow saying whether it is open; a click opens or closes
+    it. What the section is shows as the header's tooltip."""
+    tip = Tooltip.text(f"help.{widget_id}", title, description) if description else None
+    return Button(f"{widget_id}.{HEADER}", f"{OPEN_ARROW if opened else CLOSED_ARROW}{title}", align="left", weight=1, tooltip=tip)
 
 
 def indented(node: Column) -> Row:
@@ -184,10 +185,11 @@ def problems(widget_id: str, messages: list[str]) -> list[Node]:
     return [Label(f"{widget_id}.problem{i}", message, size=SMALL, wrap=True, tone="error") for i, message in enumerate(messages)]
 
 
-def about(widget_id: str, text: str, bounds: str = "") -> Label:
-    """A field's or section's description, muted, its bounds after it. A wrapped label, not a `Text` of spans: a
-    long form has a hundred of these, and spans cost twice as much to lay out every frame."""
-    return Label(f"{widget_id}.about", text + (f" ({bounds})" if bounds else ""), size=SMALL, wrap=True, tone="muted")
+def field_tip(widget_id: str, title: str, spec: FieldSpec) -> Tooltip | None:
+    """A field's help, as its name's tooltip: what it is, what turning it up or down does, and its bounds;
+    None when there is nothing to say."""
+    lines = [text for text in (spec.description, spec.impact, str(spec.bounds)) if text]
+    return Tooltip.text(f"help.{widget_id}", title, *lines) if lines else None
 
 
 def _field(spec: FieldSpec, path: FieldPath, options: FormOptions) -> list[Node]:
@@ -228,23 +230,16 @@ def _field(spec: FieldSpec, path: FieldPath, options: FormOptions) -> list[Node]
         if value is None:
             _disable(control)
         control = Row(children=[CheckBox(f"{widget_id}.{ON}", "", value is not None), control], weight=1)
-    row: list[Node] = [_name(widget_id, spec, options), control]
+    row: list[Node] = [_name(widget_id, spec), control]
     if path in options.notes:
         row.append(Label(f"{widget_id}.note", options.notes[path], size=SMALL, tone="muted"))
-    nodes: list[Node] = [Row(children=row), *problems(widget_id, messages)]
-    if options.descriptions and spec.description:
-        nodes.append(about(widget_id, spec.description, str(spec.bounds)))
-    return nodes
+    return [Row(children=row), *problems(widget_id, messages)]
 
 
-def _name(widget_id: str, spec: FieldSpec, options: FormOptions, title: str | None = None) -> Label:
-    """A field's name; with descriptions hidden, its description shows as the name's tooltip."""
+def _name(widget_id: str, spec: FieldSpec, title: str | None = None) -> Label:
+    """A field's name; what the field is and what turning it up or down does shows as the name's tooltip."""
     title = title or _title(spec.key)
-    tip = None
-    if not options.descriptions and spec.description:
-        bounds = str(spec.bounds)
-        tip = Tooltip.text(f"help.{widget_id}", title, spec.description, *([bounds] if bounds else []))
-    return Label(f"{widget_id}.label", title, weight=1, tooltip=tip)
+    return Label(f"{widget_id}.label", title, weight=1, tooltip=field_tip(widget_id, title, spec))
 
 
 def _stepper(spec: FieldSpec, path: FieldPath, recipe: Recipe) -> Row:
@@ -264,9 +259,7 @@ def _keyed(spec: FieldSpec, path: FieldPath, options: FormOptions) -> list[Node]
     """A row per key: COUNTS a box each (0 for a key left out); WEIGHTS a check box turning the key on, then its
     box, greyed with the default while off."""
     widget_id, recipe = yaml_path(path), options.recipe
-    rows: list[Node] = [Row(children=[_name(widget_id, spec, options)])]
-    if options.descriptions and spec.description:
-        rows.append(about(widget_id, spec.description, str(spec.bounds)))
+    rows: list[Node] = [Row(children=[_name(widget_id, spec)])]
     values = recipe.get(path) or {}
     defaults = options.defaults.get(path, {})
     for key in spec.choices:
