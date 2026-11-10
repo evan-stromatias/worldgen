@@ -154,7 +154,7 @@ def test_locate_box_kind_and_blank():
 def test_the_defaults_have_no_file_until_saved(tmp_path):
     recipe = Recipe.defaults()
     assert recipe.path is None
-    assert recipe.valid 
+    assert recipe.valid
     assert Recipe.load(DEFAULT_RECIPE).data
     path = tmp_path / "elsewhere" / "mine.yaml"  # its folder does not exist yet
     recipe.save(path)
