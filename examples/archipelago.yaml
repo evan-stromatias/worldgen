@@ -1,0 +1,12 @@
+# An archipelago: several islands. Keys left out take their defaults (worldgen.proc_gen.world.config
+# documents them all).
+
+version: 1
+world:
+  cell_size: 1.0
+  size_cells: 1024
+  sea_level: 0.0
+elevation:
+  mask: archipelago
+  archipelago: {islands: 9, size: [0.08, 0.26], spacing: 0.8}
+  noise: {frequency: 0.004}

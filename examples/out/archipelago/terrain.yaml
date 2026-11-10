@@ -1,0 +1,264 @@
+# A terrain bundle's recipe and seed, written by worldgen.
+
+seed: 7
+version: 1
+world:
+  cell_size: 1.0
+  patch_cells: 128
+  size_cells: 1024
+  sea_level: 0.0
+elevation:
+  mask: archipelago
+  mask_falloff:
+  - 0.55
+  - 0.95
+  mask_distortion: 0.15
+  shore: 0.08
+  max_height: 60.0
+  sea_floor: -12.0
+  noise:
+    octaves: 6
+    frequency: 0.004
+    lacunarity: 2.0
+    gain: 0.5
+  warp:
+    strength: 80.0
+    frequency: 0.002
+  archipelago:
+    islands: 9
+    size:
+    - 0.08
+    - 0.26
+    spacing: 0.8
+  mountains:
+    enabled: false
+    wavelength: 400.0
+    octaves: 6
+    gain: 0.5
+    sharpness: 2.0
+    height: 0.6
+    coverage: 0.35
+    range_wavelength: 1500.0
+    warp: true
+  terraces:
+    enabled: false
+    step: 12.0
+    sharpness: 0.7
+    where: noise
+    wavelength: 800.0
+    coverage: 0.3
+erosion:
+  enabled: false
+  droplets: 1.0
+  batch: 8192
+  levels: 3
+  lifetime: 40
+  inertia: 0.1
+  capacity: 1.0
+  min_slope: 0.01
+  erode_rate: 0.3
+  deposit_rate: 0.3
+  evaporation: 0.02
+  gravity: 0.1
+  radius: 2.0
+  smoothing: 1
+  talus_angle: 35.0
+  rock_talus_angle: 70.0
+  thermal_iterations: 40
+  thermal_rate: 0.5
+hydrology:
+  epsilon: 0.0001
+  lake_min_depth: 0.5
+  lake_min_area: 40
+  river_threshold: 1500.0
+  carve_depth: 2.5
+  bank_falloff: 3
+  river_min_width: 1.5
+  river_width_scale: 4.0
+  rain:
+    base: 1.0
+    noise: 0.5
+    frequency: 0.001
+  rain_shadow:
+    enabled: true
+    wind:
+    - 1.0
+    - 0.0
+    strength: 0.6
+  meander:
+    strength: 2.0
+    frequency: 0.03
+climate:
+  base_temperature: 18.0
+  latitude_gradient: 12.0
+  lapse_rate: 300.0
+  temperature_noise: 3.0
+  moisture:
+    rain_weight: 0.6
+    water_distance: 60.0
+    noise: 0.15
+biomes:
+  blend_width: 0.08
+  relief_radius: 60.0
+  rules:
+  - id: sea_floor
+    when:
+      elevation: null
+      temperature: null
+      moisture: null
+      slope: null
+      sediment: null
+      relief: null
+      water: sea
+    ground:
+      color:
+      - 150
+      - 140
+      - 105
+      jitter: 0.0
+  - id: lake_bed
+    when:
+      elevation: null
+      temperature: null
+      moisture: null
+      slope: null
+      sediment: null
+      relief: null
+      water: lake
+    ground:
+      color:
+      - 96
+      - 92
+      - 70
+      jitter: 0.0
+  - id: riverbed
+    when:
+      elevation: null
+      temperature: null
+      moisture: null
+      slope: null
+      sediment: null
+      relief: null
+      water: river
+    ground:
+      color:
+      - 110
+      - 100
+      - 78
+      jitter: 0.0
+  - id: beach
+    when:
+      elevation:
+      - -1.0
+      - 1.5
+      temperature: null
+      moisture: null
+      slope:
+      - 0.0
+      - 20.0
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 205
+      - 190
+      - 140
+      jitter: 0.04
+  - id: snow
+    when:
+      elevation: null
+      temperature:
+      - -50.0
+      - -2.0
+      moisture: null
+      slope: null
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 235
+      - 238
+      - 242
+      jitter: 0.0
+  - id: cliff
+    when:
+      elevation: null
+      temperature: null
+      moisture: null
+      slope:
+      - 38.0
+      - 90.0
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 128
+      - 122
+      - 112
+      jitter: 0.05
+  - id: forest
+    when:
+      elevation: null
+      temperature:
+      - 2.0
+      - 25.0
+      moisture:
+      - 0.55
+      - 1.0
+      slope: null
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 78
+      - 118
+      - 60
+      jitter: 0.07
+  - id: grassland
+    when:
+      elevation: null
+      temperature: null
+      moisture:
+      - 0.25
+      - 0.55
+      slope: null
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 112
+      - 152
+      - 82
+      jitter: 0.07
+  - id: desert
+    when:
+      elevation: null
+      temperature:
+      - 18.0
+      - 50.0
+      moisture:
+      - 0.0
+      - 0.25
+      slope: null
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 214
+      - 180
+      - 120
+      jitter: 0.04
+  - id: default
+    when: null
+    ground:
+      color:
+      - 112
+      - 152
+      - 82
+      jitter: 0.07

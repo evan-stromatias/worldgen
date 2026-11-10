@@ -1,0 +1,66 @@
+[project]
+name = "worldgen"
+version = "0.1.0"
+description = "Generic procedural terrain generation: elevation, erosion, hydrology, climate and biomes, from a YAML recipe and a seed. With a rayscreen UI."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Evan Stromatias", email = "evangelos.stromatias@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=2.5.4",
+    "pydantic>=2.12",
+    "pydantic-settings>=2.16.1",
+    "pyyaml>=6.0.3",
+    "rayscreen @ git+https://github.com/evan-stromatias/rayscreen.git@v0.42.3",
+    "raylib==6.0.1.0",
+]
+
+[project.scripts]
+worldgen = "worldgen.proc_gen.world.__main__:main"
+worldgen-ui = "worldgen.utils.world_gen_ui.__main__:main"
+
+[build-system]
+requires = ["uv_build>=0.11.2,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "worldgen"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "ruff>=0.14",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 140
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, bugbear, pyupgrade, simplifications
+select = ["E", "W", "F", "I", "B", "UP", "SIM"]
+ignore = [
+    "SIM108",  # ternaries are not always clearer than an if/else
+    "B905",  # zip(a, a[1:]) pairs neighbours; strict= would reject it
+    "SIM102",
+    "B007",
+    "B023",
+    "SIM110",
+    "E501",  # the formatter wraps; comments and docstrings run long
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B008"]  # helper defaults read well in tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["worldgen", "rayscreen"]
+
+[tool.ruff.format]
+quote-style = "double"
