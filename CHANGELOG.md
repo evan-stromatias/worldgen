@@ -1,3 +1,6 @@
+2026-11-10, 0.1.2:
+  - fix outdated tests
+
 2026-11-10, 0.1.1:
   - dummy change
 
