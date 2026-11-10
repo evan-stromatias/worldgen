@@ -19,8 +19,8 @@ dependencies = [
 ]
 
 [project.scripts]
-worldgen = "worldgen.proc_gen.world.__main__:main"
-worldgen-ui = "worldgen.utils.world_gen_ui.__main__:main"
+worldgen = "worldgen.generator.__main__:main"
+worldgen-ui = "worldgen.ui.__main__:main"
 
 [build-system]
 requires = ["uv_build>=0.11.2,<0.12.0"]

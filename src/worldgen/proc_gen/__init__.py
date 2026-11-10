@@ -1,1 +1,0 @@
-"""Offline procedural generation."""

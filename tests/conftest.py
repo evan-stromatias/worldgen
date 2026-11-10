@@ -5,9 +5,9 @@ import copy
 import pytest
 
 from common import SEED, SMALL
-from worldgen.proc_gen.world.config import TerrainConfig, parse_config
-from worldgen.proc_gen.world.terrain import TerrainData
-from worldgen.proc_gen.world.terrain_io import generate_terrain
+from worldgen.generator.config import TerrainConfig, parse_config
+from worldgen.generator.terrain import TerrainData
+from worldgen.generator.terrain_io import generate_terrain
 
 
 @pytest.fixture

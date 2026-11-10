@@ -1,48 +1,105 @@
-# The default terrain recipe: one island, 1 km square at 1 m cells. Keys left out take their defaults;
-# worldgen.proc_gen.world.config has every key and its description.
-
-version: 0.1.0
+# The default terrain recipe: one island, 1 km square at 1 m cells. Every key of a recipe is here at its
+# default. Leave a key out and it takes the value shown here.
+version: 0.1.0          # the worldgen that wrote the file (semantic versioning), stamped on export; never checked on load
 world:
-  cell_size: 1.0
-  patch_cells: 128
-  size_cells: 1024
-  sea_level: 0.0
+  cell_size: 1.0        # metres per cell
+  patch_cells: 128      # cells per patch side, when the terrain is read in patches
+  size_cells: 1024      # cells per side; a multiple of patch_cells
+  sea_level: 0.0        # height of the sea surface, metres
 elevation:
-  mask: island
-  mask_falloff: [0.55, 0.95]
-  mask_distortion: 0.15
-  shore: 0.08
-  max_height: 60.0
-  sea_floor: -12.0
-  noise: {octaves: 6, frequency: 0.003, lacunarity: 2.0, gain: 0.5}
-  warp: {strength: 80.0, frequency: 0.002}
+  mask: island          # island | archipelago | continent
+  mask_falloff: [0.55, 0.95]  # island radii where land starts and stops falling into the sea
+  mask_distortion: 0.15       # how much noise bends the island outline (0-1)
+  falloff: 0.0          # continent only: share of the world width the coast lies within; 0 = land to the edges
+  shore: 0.08           # shaped noise value (0-1) at which land meets the sea
+  max_height: 60.0      # metres above sea level at the highest point
+  sea_floor: -12.0      # height of the deepest open sea, metres
+  noise:                # the hills' fractal (fBm) noise
+    octaves: 6          # layers of noise summed
+    frequency: 0.003    # cycles per cell of the first octave
+    lacunarity: 2.0     # frequency multiplier from one octave to the next
+    gain: 0.5           # amplitude multiplier from one octave to the next
+  warp:                 # domain warp: noise pushes where the hills are sampled, so ridges and coasts bend
+    strength: 80.0      # how far sample points are pushed, cells
+    frequency: 0.002    # cycles per cell of the warp noise
+  archipelago:          # used when mask: archipelago
+    islands: 7          # islands to place; fewer if they do not fit
+    size: [0.1, 0.3]    # island radius range, as a fraction of the world width
+    spacing: 0.8        # minimum gap between island centres, in units of their summed outer radii
+  mountains:            # ridged-noise ranges, risen only where a slow mask puts them
+    enabled: false
+    wavelength: 400.0   # spacing of the ridges, metres
+    octaves: 6
+    gain: 0.5
+    sharpness: 2.0      # 1 is a crease, 2 a knife edge
+    height: 0.6         # share of max_height the ranges rise above the hills
+    coverage: 0.35      # share of the world in ranges
+    range_wavelength: 1500.0  # size of the range mask's blobs, metres
+    warp: true          # sample the ridges through the hills' warp, so ranges bend with them
+  terraces:             # heights gathered into strata: plateaus and mesas with cliff edges
+    enabled: false
+    step: 12.0          # height of one stratum, metres
+    sharpness: 0.7      # 0 smooth slopes, 1 nearly vertical step faces
+    where: noise        # all | mountains (the range mask) | noise (a mask of its own)
+    wavelength: 800.0   # size of the terrace mask's blobs (where: noise), metres
+    coverage: 0.3       # share of the world terraced (where: noise)
+erosion:                # droplet erosion, then thermal sliding; off by default
+  enabled: false
+  droplets: 1.0         # droplets per vertex of each level's grid
+  batch: 8192           # droplets that step together; they see each other's changes a step late
+  levels: 3             # grids eroded, coarsest first: 3 is every 8th, 4th and 1st vertex
+  lifetime: 40          # steps a droplet takes at most
+  inertia: 0.1          # how much a droplet keeps its direction rather than turn downhill
+  capacity: 1.0         # sediment a droplet can carry, per metre it drops and unit of speed and water
+  min_slope: 0.01       # least slope capacity is worked out with, so flats still carry
+  erode_rate: 0.3       # share of its spare capacity a droplet erodes each step
+  deposit_rate: 0.3     # share of its excess sediment a droplet drops each step
+  evaporation: 0.02     # share of its water a droplet loses each step
+  gravity: 0.1          # how fast a droplet speeds up going down, per unit of slope
+  radius: 2.0           # radius of the brush a droplet erodes with, in vertices of its level's grid
+  smoothing: 1          # vertices each level's change is blurred over before it is added; 0 is none
+  talus_angle: 35.0     # steepest slope loose ground holds, degrees
+  rock_talus_angle: 70.0    # steepest slope inside the terrace mask, degrees, so cliffs survive
+  thermal_iterations: 40    # passes of sliding; 0 skips it
+  thermal_rate: 0.5     # share of the excess height a pass moves downhill
 hydrology:
-  epsilon: 0.0001
-  lake_min_depth: 0.5
-  lake_min_area: 40
-  river_threshold: 1500.0
-  carve_depth: 2.5
-  bank_falloff: 3
-  river_min_width: 1.5
-  river_width_scale: 4.0
-  rain: {base: 1.0, noise: 0.5, frequency: 0.001}
-  rain_shadow: {enabled: true, wind: [1.0, 0.0], strength: 0.6}
-  meander: {strength: 2.0, frequency: 0.03}
+  epsilon: 0.0001       # priority-flood step, so flats still drain
+  lake_min_depth: 0.5   # shallower depressions are filled in, metres
+  lake_min_area: 40     # smaller depressions are filled in, cells
+  river_threshold: 1500.0   # accumulated rainfall (in cells' worth) at which a river starts
+  carve_depth: 2.5      # k in channel depth = k * strength^0.5, metres
+  bank_falloff: 3       # cells over which banks slope down to a river
+  river_min_width: 1.5  # width of a river where it starts, metres
+  river_width_scale: 4.0    # width the strongest river adds, metres; width grows with strength
+  rain:
+    base: 1.0           # rainfall per cell before noise
+    noise: 0.5          # fraction of the base that noise adds or removes
+    frequency: 0.001    # cycles per cell of the rain noise
+  rain_shadow:          # less rain downwind of high ground
+    enabled: true
+    wind: [1.0, 0.0]    # prevailing wind direction (x, z)
+    strength: 0.6       # fraction of rain lost behind the tallest ridges
+  meander:              # bends in rivers
+    strength: 2.0       # how far rivers stray from straight downhill; 0 is plain steepest descent
+    frequency: 0.03     # cycles per cell of the noise that steers the bends
 climate:
-  base_temperature: 18.0
-  latitude_gradient: 12.0
-  lapse_rate: 300.0
-  temperature_noise: 3.0
-  moisture: {rain_weight: 0.6, water_distance: 60.0, noise: 0.15}
+  base_temperature: 18.0    # °C at sea level on the south edge
+  latitude_gradient: 12.0   # °C colder on the north edge than the south edge
+  lapse_rate: 300.0         # °C colder per 1000 m of height; exaggerated so low peaks still get snow
+  temperature_noise: 3.0    # °C
+  moisture:                 # rain, and water nearby
+    rain_weight: 0.6        # share of moisture from rain; the rest is water nearby
+    water_distance: 60.0    # how far water nearby keeps land moist, cells
+    noise: 0.15             # amplitude of moisture noise
 biomes:
-  blend_width: 0.08
-  relief_radius: 60.0
-  rules:
-  - id: sea_floor
-    when: {water: sea}
-    ground: {color: [150, 140, 105], jitter: 0.0}
-  - id: lake_bed
-    when: {water: lake}
+  blend_width: 0.08     # fraction of each range over which neighbouring biomes blend colour
+  relief_radius: 60.0   # metres around a cell its relief looks for the lowest ground in
+  rules:                # tried in order, the first match wins; the last has no `when` and catches all
+  - id: sea_floor       # a lowercase name, unique in the file
+    when: {water: sea}  # a `when` key is a range [min, max] or water: sea | lake | river | none
+    ground: {color: [150, 140, 105], jitter: 0.0}  # RGB ground colour; jitter adds per-cell brightness variation
+  - id: lake_bed        # the `when` keys: elevation (m), temperature (°C), moisture (0-1),
+    when: {water: lake} # slope (°), sediment (m), relief (m), water
     ground: {color: [96, 92, 70], jitter: 0.0}
   - id: riverbed
     when: {water: river}
@@ -57,13 +114,13 @@ biomes:
     when: {slope: [38.0, 90.0]}
     ground: {color: [128, 122, 112], jitter: 0.05}
   - id: forest
-    when: {temperature: [2.0, 25.0], moisture: [0.55, 1.0]}
+    when: {moisture: [0.55, 1.0], temperature: [2.0, 25.0]}
     ground: {color: [78, 118, 60], jitter: 0.07}
   - id: grassland
     when: {moisture: [0.25, 0.55]}
     ground: {color: [112, 152, 82], jitter: 0.07}
   - id: desert
-    when: {temperature: [18.0, 50.0], moisture: [0.0, 0.25]}
+    when: {moisture: [0.0, 0.25], temperature: [18.0, 50.0]}
     ground: {color: [214, 180, 120], jitter: 0.04}
-  - id: default
+  - id: default         # no `when`: every cell nothing above matched
     ground: {color: [112, 152, 82], jitter: 0.07}

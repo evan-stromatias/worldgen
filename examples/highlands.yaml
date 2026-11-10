@@ -1,5 +1,5 @@
 # Highlands: a 4 km continent of mountain ranges, terraced in part, weathered by erosion.
-# Keys left out take their defaults (worldgen.proc_gen.world.config documents them all).
+# Keys left out take their defaults (worldgen.generator.config documents them all).
 
 version: 0.1.0
 world:

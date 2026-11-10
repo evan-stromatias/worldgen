@@ -5,7 +5,7 @@
 in vec3 fragPosition;
 in vec2 fragTexCoord;
 in vec3 fragNormal;
-in vec4 fragColor;     // white unless the mesh has colours (towns)
+in vec4 fragColor;     // white unless the mesh has per-vertex colours
 
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
@@ -21,7 +21,7 @@ uniform float borderWidth;  // in texture coordinates; 0 hides patch borders
 
 out vec4 finalColor;
 
-// Town meshes address a strip of atlasTiles square tiles (r.world.towns.atlas): texcoord x is
+// A mesh may address a strip of atlasTiles square tiles in its texture: texcoord x is
 // tile*256 + 128 + u and y is v, with u and v counting repeats of the tile. 0 means a plain texture.
 uniform float atlasTiles;
 const float ATLAS_STRIDE = 256.0;

@@ -12,8 +12,8 @@ from pathlib import Path
 import numpy as np
 
 from worldgen import TerrainData, export_terrain, generate_terrain
-from worldgen.proc_gen.world import preview
-from worldgen.proc_gen.world.config import load_config
+from worldgen.generator import preview
+from worldgen.generator.config import load_config
 
 HERE = Path(__file__).parent
 OUT = HERE / "out" / "archipelago"
@@ -44,7 +44,7 @@ def show(patch) -> None:
     """Draw the patch in a window: its colours, hillshaded, with its water, and what it knows."""
     import pyray as rl
 
-    from worldgen.world.gpu import GpuTexture
+    from worldgen.mesh.gpu import GpuTexture
 
     image = patch.color.astype(np.float64) * preview.hillshade(patch.vertex_height, patch.cell_size)[..., None]
     preview.water_over(image, patch.vertex_height, patch.water, patch.river)

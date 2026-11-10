@@ -1,4 +1,4 @@
-# An archipelago: several islands. Keys left out take their defaults (worldgen.proc_gen.world.config
+# An archipelago: several islands. Keys left out take their defaults (worldgen.generator.config
 # documents them all).
 
 version: 0.1.0

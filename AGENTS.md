@@ -29,30 +29,32 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
 
 ## Layout
 
-- `src/worldgen/proc_gen/world/`: the generator. `config.py` is the recipe (`TerrainConfig`: the `world`
+- `src/worldgen/generator/`: the generator. `config.py` is the recipe (`TerrainConfig`: the `world`
   grid and one section per stage, validated with pydantic, YAML-path error messages); `pipeline.py` runs
-  the five stages in order; one module per stage (`elevation`, `erosion`, `hydrology`, `climate`,
-  `biomes`), plus `noise.py` (own gradient noise, so a terrain never changes with a dependency upgrade),
-  `grid.py` (array helpers), `preview.py` (the hillshaded preview and the deterministic `write_npz` /
-  `write_png`), `terrain.py` (`TerrainData`, the terrain in memory, with its derived arrays lazy),
-  `terrain_io.py` (`generate_terrain`, `export_terrain`, `load_terrain`: the terrain bundle),
+  the five stages in order; `stages/` holds one module per stage (`elevation`, `erosion`, `hydrology`,
+  `climate`, `biomes`), plus `noise.py` (own gradient noise, so a terrain never changes with a dependency
+  upgrade), `grid.py` (array helpers), `preview.py` (the hillshaded preview and the deterministic
+  `write_npz` / `write_png`), `terrain.py` (`TerrainData`, the terrain in memory, with its derived arrays
+  lazy), `terrain_io.py` (`generate_terrain`, `export_terrain`, `load_terrain`: the terrain bundle),
   `patches.py` (reading a terrain in patches), `__main__.py` (the `worldgen` CLI).
   Generation runs once, offline: favour clear code over speed there.
-- `src/worldgen/world/`: meshes and the overview (`overview.py`, `mesh.py` — pure numpy, so it runs on
+- `src/worldgen/mesh/`: meshes and the overview (`overview.py`, `builders.py` — pure numpy, so they run on
   workers — and `gpu.py`, the raylib upload of them, main thread only). Nothing here loads saved worlds.
 - `src/worldgen/viewer/`: the terrain renderer the UI's 3D view uses: `render.py` (terrain and water
   shaders, bundled in `viewer/shaders/`), `config.py` (`ViewerSettings`, `VIEWER_*` env), `camera.py`,
   `geometry.py` (camera maths, no window).
-- `src/worldgen/utils/world_gen_ui/`: the generator with a UI (`worldgen-ui`). MVC: `model/` has no
-  raylib and is tested without a window (the recipe forms built from the pydantic classes — `model/form.py`,
-  so a new recipe field shows up with no UI change — the draft recipe, the log, the camera for 2D and 3D,
-  the session running the stages on a worker, the map's layers and 3D terrain, the biome rules, the export);
-  `view/` is rayscreen specs (the form, dialogs, log window, tooltips, the world screen), only
-  `map_render.py` and `terrain_view.py` make GL calls; `controller.py` is the only code that changes the
-  model; `app.py` is the window's loop. GL calls stay on the main thread.
+- `src/worldgen/ui/`: the generator with a UI (`worldgen-ui`). MVC: `model/` has no raylib and is tested
+  without a window (`model/recipe/` is the draft recipe, its forms built from the pydantic classes —
+  `model/recipe/form.py`, so a new recipe field shows up with no UI change — the biome rules and the size
+  notes; `model/` the log, the session running the stages on a worker, the export; `model/map/` the camera
+  for 2D and 3D, the map's layers and 3D terrain, the readout under the mouse); `view/` is rayscreen specs
+  (the form, dialogs, log window, tooltips, the world screen), only `view/gl/` makes GL calls;
+  `controller.py` is the only code that changes the model; `app.py` is the window's loop. GL calls stay on
+  the main thread.
 - `assets/recipes/`: the default recipe the CLI falls back on.
 - `examples/`: recipes and `generate.py` (generate, export, load, show a patch).
-- `tests/`: pytest; `common.py` holds the small test recipe and the inline executor.
+- `tests/`: pytest, mirroring `src/` (`generator/`, `ui/`, `viewer/`); `common.py` holds the small test
+  recipe and the inline executor.
 
 ## Conventions
 
@@ -71,8 +73,8 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
   checks it — whether another version's file still works is the client's call — but when reading a
   bundle fails, the error names the version in the file.
 - **raylib.**
-  - GL calls only on the main thread; meshes are built as numpy arrays on workers (`worldgen.world.mesh`)
-    and uploaded on the main thread (`worldgen.world.gpu`).
+  - GL calls only on the main thread; meshes are built as numpy arrays on workers (`worldgen.mesh.builders`)
+    and uploaded on the main thread (`worldgen.mesh.gpu`).
   - In per-frame loops over many objects, call `raylib.*` C functions directly; pyray's wrappers
     cost tens of microseconds a call.
 - **Settings and data classes.** Settings and recipes use pydantic with YAML-path or env error
@@ -96,5 +98,5 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
 - **Keep the README current.** Whenever a change alters how generation works, update "How a terrain is
   made" in `README.md` in the same change: the stages, their order, what each does, the recipe settings
   it names and the files it writes. Check the stage descriptions against the code. Whenever the recipe
-  format changes (a key added, renamed, removed or re-defaulted), update the commented example under
-  "Recipes" in the same change.
+  format changes (a key added, renamed, removed or re-defaulted), update the commented
+  `assets/recipes/default.yaml` in the same change.

@@ -11,10 +11,10 @@ Also `worldgen` (the CLI) and `worldgen-ui` (the generator with a UI).
 """
 
 from worldgen.config import VERSION
-from worldgen.proc_gen.world.config import TerrainConfig
-from worldgen.proc_gen.world.patches import Patch
-from worldgen.proc_gen.world.terrain import TerrainData
-from worldgen.proc_gen.world.terrain_io import export_terrain, generate_terrain, load_terrain
+from worldgen.generator.config import TerrainConfig
+from worldgen.generator.patches import Patch
+from worldgen.generator.terrain import TerrainData
+from worldgen.generator.terrain_io import export_terrain, generate_terrain, load_terrain
 
 __version__ = VERSION
 

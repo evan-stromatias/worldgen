@@ -133,7 +133,7 @@ patch.water         # (P+1)², NaN = dry — plus sea, lake_id, river, flow_dir
 patch.biome         # P² — plus color, temperature, moisture, sediment
 patch.lakes         # the lake records whose bounds reach the patch
 patch.rivers        # the river polylines (world vertex coordinates) passing through it
-mesh = patch.mesh() # terrain and water meshes, ready for worldgen.world.gpu's GpuPatch
+mesh = patch.mesh() # terrain and water meshes, ready for worldgen.mesh.gpu's GpuPatch
 ```
 
 `examples/generate.py` shows the whole flow: generate, export, load, take the patch under a point and
@@ -177,143 +177,46 @@ with np.load("out/island/terrain.npz") as data:
 ## Recipes
 
 A recipe is YAML: the `world` grid (size, patch and cell size, sea level) and one section per stage.
-Every key takes its default when left out, so a recipe says only what it changes. A recipe with every
-key at its default, commented:
+Every key takes its default when left out, so a recipe says only what it changes.
+[`assets/recipes/default.yaml`](assets/recipes/default.yaml), the recipe the CLI falls back on, lists
+every key at its default, with a comment per key.
 
-```yaml
-# A terrain recipe, every key at its default. Leave a key out and it takes the value shown here.
-version: 0.1.0          # the worldgen that wrote the file (semantic versioning), stamped on export; never checked on load
-world:
-  cell_size: 1.0        # metres per cell
-  patch_cells: 128      # cells per patch side, when the terrain is read in patches
-  size_cells: 1024      # cells per side; a multiple of patch_cells
-  sea_level: 0.0        # height of the sea surface, metres
-elevation:
-  mask: island          # island | archipelago | continent
-  mask_falloff: [0.55, 0.95]  # island radii where land starts and stops falling into the sea
-  mask_distortion: 0.15       # how much noise bends the island outline (0-1)
-  falloff: 0.0          # continent only: share of the world width the coast lies within; 0 = land to the edges
-  shore: 0.08           # shaped noise value (0-1) at which land meets the sea
-  max_height: 60.0      # metres above sea level at the highest point
-  sea_floor: -12.0      # height of the deepest open sea, metres
-  noise:                # the hills' fractal (fBm) noise
-    octaves: 6          # layers of noise summed
-    frequency: 0.003    # cycles per cell of the first octave
-    lacunarity: 2.0     # frequency multiplier from one octave to the next
-    gain: 0.5           # amplitude multiplier from one octave to the next
-  warp:                 # domain warp: noise pushes where the hills are sampled, so ridges and coasts bend
-    strength: 80.0      # how far sample points are pushed, cells
-    frequency: 0.002    # cycles per cell of the warp noise
-  archipelago:          # used when mask: archipelago
-    islands: 7          # islands to place; fewer if they do not fit
-    size: [0.1, 0.3]    # island radius range, as a fraction of the world width
-    spacing: 0.8        # minimum gap between island centres, in units of their summed outer radii
-  mountains:            # ridged-noise ranges, risen only where a slow mask puts them
-    enabled: false
-    wavelength: 400.0   # spacing of the ridges, metres
-    octaves: 6
-    gain: 0.5
-    sharpness: 2.0      # 1 is a crease, 2 a knife edge
-    height: 0.6         # share of max_height the ranges rise above the hills
-    coverage: 0.35      # share of the world in ranges
-    range_wavelength: 1500.0  # size of the range mask's blobs, metres
-    warp: true          # sample the ridges through the hills' warp, so ranges bend with them
-  terraces:             # heights gathered into strata: plateaus and mesas with cliff edges
-    enabled: false
-    step: 12.0          # height of one stratum, metres
-    sharpness: 0.7      # 0 smooth slopes, 1 nearly vertical step faces
-    where: noise        # all | mountains (the range mask) | noise (a mask of its own)
-    wavelength: 800.0   # size of the terrace mask's blobs (where: noise), metres
-    coverage: 0.3       # share of the world terraced (where: noise)
-erosion:                # droplet erosion, then thermal sliding; off by default
-  enabled: false
-  droplets: 1.0         # droplets per vertex of each level's grid
-  batch: 8192           # droplets that step together; they see each other's changes a step late
-  levels: 3             # grids eroded, coarsest first: 3 is every 8th, 4th and 1st vertex
-  lifetime: 40          # steps a droplet takes at most
-  inertia: 0.1          # how much a droplet keeps its direction rather than turn downhill
-  capacity: 1.0         # sediment a droplet can carry, per metre it drops and unit of speed and water
-  min_slope: 0.01       # least slope capacity is worked out with, so flats still carry
-  erode_rate: 0.3       # share of its spare capacity a droplet erodes each step
-  deposit_rate: 0.3     # share of its excess sediment a droplet drops each step
-  evaporation: 0.02     # share of its water a droplet loses each step
-  gravity: 0.1          # how fast a droplet speeds up going down, per unit of slope
-  radius: 2.0           # radius of the brush a droplet erodes with, in vertices of its level's grid
-  smoothing: 1          # vertices each level's change is blurred over before it is added; 0 is none
-  talus_angle: 35.0     # steepest slope loose ground holds, degrees
-  rock_talus_angle: 70.0    # steepest slope inside the terrace mask, degrees, so cliffs survive
-  thermal_iterations: 40    # passes of sliding; 0 skips it
-  thermal_rate: 0.5     # share of the excess height a pass moves downhill
-hydrology:
-  epsilon: 0.0001       # priority-flood step, so flats still drain
-  lake_min_depth: 0.5   # shallower depressions are filled in, metres
-  lake_min_area: 40     # smaller depressions are filled in, cells
-  river_threshold: 1500.0   # accumulated rainfall (in cells' worth) at which a river starts
-  carve_depth: 2.5      # k in channel depth = k * strength^0.5, metres
-  bank_falloff: 3       # cells over which banks slope down to a river
-  river_min_width: 1.5  # width of a river where it starts, metres
-  river_width_scale: 4.0    # width the strongest river adds, metres; width grows with strength
-  rain:
-    base: 1.0           # rainfall per cell before noise
-    noise: 0.5          # fraction of the base that noise adds or removes
-    frequency: 0.001    # cycles per cell of the rain noise
-  rain_shadow:          # less rain downwind of high ground
-    enabled: true
-    wind: [1.0, 0.0]    # prevailing wind direction (x, z)
-    strength: 0.6       # fraction of rain lost behind the tallest ridges
-  meander:              # bends in rivers
-    strength: 2.0       # how far rivers stray from straight downhill; 0 is plain steepest descent
-    frequency: 0.03     # cycles per cell of the noise that steers the bends
-climate:
-  base_temperature: 18.0    # °C at sea level on the south edge
-  latitude_gradient: 12.0   # °C colder on the north edge than the south edge
-  lapse_rate: 300.0         # °C colder per 1000 m of height; exaggerated so low peaks still get snow
-  temperature_noise: 3.0    # °C
-  moisture:                 # rain, and water nearby
-    rain_weight: 0.6        # share of moisture from rain; the rest is water nearby
-    water_distance: 60.0    # how far water nearby keeps land moist, cells
-    noise: 0.15             # amplitude of moisture noise
-biomes:
-  blend_width: 0.08     # fraction of each range over which neighbouring biomes blend colour
-  relief_radius: 60.0   # metres around a cell its relief looks for the lowest ground in
-  rules:                # tried in order, the first match wins; the last has no `when` and catches all
-  - id: sea_floor       # a lowercase name, unique in the file
-    when: {water: sea}  # a `when` key is a range [min, max] or water: sea | lake | river | none
-    ground: {color: [150, 140, 105], jitter: 0.0}  # RGB ground colour; jitter adds per-cell brightness variation
-  - id: lake_bed        # the `when` keys: elevation (m), temperature (°C), moisture (0-1),
-    when: {water: lake} # slope (°), sediment (m), relief (m), water
-    ground: {color: [96, 92, 70], jitter: 0.0}
-  - id: riverbed
-    when: {water: river}
-    ground: {color: [110, 100, 78], jitter: 0.0}
-  - id: beach
-    when: {elevation: [-1.0, 1.5], slope: [0.0, 20.0]}
-    ground: {color: [205, 190, 140], jitter: 0.04}
-  - id: snow
-    when: {temperature: [-50.0, -2.0]}
-    ground: {color: [235, 238, 242], jitter: 0.0}
-  - id: cliff
-    when: {slope: [38.0, 90.0]}
-    ground: {color: [128, 122, 112], jitter: 0.05}
-  - id: forest
-    when: {moisture: [0.55, 1.0], temperature: [2.0, 25.0]}
-    ground: {color: [78, 118, 60], jitter: 0.07}
-  - id: grassland
-    when: {moisture: [0.25, 0.55]}
-    ground: {color: [112, 152, 82], jitter: 0.07}
-  - id: desert
-    when: {moisture: [0.0, 0.25], temperature: [18.0, 50.0]}
-    ground: {color: [214, 180, 120], jitter: 0.04}
-  - id: default         # no `when`: every cell nothing above matched
-    ground: {color: [112, 152, 82], jitter: 0.07}
-```
-
-See `examples/` for recipes that change a little, and `worldgen.proc_gen.world.config` for the prose
+See `examples/` for recipes that change a little, and `worldgen.generator.config` for the prose
 documentation of every field.
 
 `version` records the worldgen version that wrote the file, stamped on every export. worldgen never
 checks it: whether a bundle written by another version still works for you is your call as the client.
 But when reading a bundle does fail, the error names the version in its file.
+
+## Project structure
+
+One package, `worldgen`, under `src/`:
+
+- `worldgen/generator/` — the offline generator: `terrain.yaml` + seed → elevation, water, biomes, lakes
+  and rivers. `config.py` is the recipe (`TerrainConfig`, the `world` grid plus one section per stage),
+  `pipeline.py` runs the stages in order, `stages/` holds one module per stage (`elevation`, `erosion`,
+  `hydrology`, `climate`, `biomes`), `noise.py` and `grid.py` the array helpers they share. `terrain.py`
+  is the terrain in memory, `terrain_io.py` the bundle on disk (`generate_terrain`, `export_terrain`,
+  `load_terrain`), `patches.py` reading a terrain in patches, `preview.py` the hillshaded preview and the
+  deterministic file writers, `__main__.py` the `worldgen` CLI.
+- `worldgen/mesh/` — terrain and water meshes: `builders.py` builds them as pure numpy arrays (so they
+  run on worker threads), `overview.py` downsamples the whole terrain to a low resolution for the 3D view
+  and height queries, `gpu.py` uploads the arrays to raylib (main thread only). Nothing here loads saved
+  worlds.
+- `worldgen/viewer/` — the terrain renderer the UI's 3D view uses: `render.py` (the terrain and water
+  shaders, bundled in `viewer/shaders/`), `config.py` (`ViewerSettings`, from `VIEWER_*` environment
+  variables), `camera.py` (the free-flying camera), `geometry.py` (camera maths, no window).
+- `worldgen/ui/` — the generator with a UI (`worldgen-ui`), as MVC. `model/` has no raylib and is tested
+  without a window: `model/recipe/` is the draft recipe being edited (the forms built from the pydantic
+  classes, so a new recipe field shows up with no UI change; the biome rules; the size notes), `model/`
+  the log, the session running the stages on a worker and the export, `model/map/` where the map looks,
+  its layers and its 3D terrain. `view/` is rayscreen specs (the form, bars, dialogs, log window,
+  tooltips, the world screen) — only `view/gl/` makes GL calls, rendering the map into a texture.
+  `controller.py` is the only code that changes the model; `app.py` is the window's loop.
+
+`worldgen/config.py` (the package version and the bundled default recipe's path) and
+`worldgen/geometry.py` (plane geometry on (x, z) points) are the shared leaves every package above may
+use.
 
 ## Tests
 
