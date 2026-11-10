@@ -222,7 +222,8 @@ def test_readout(small_session):
     assert facts["biome"] in {rule.id for rule in config.biomes.rules}
     assert found.text().startswith(found.title + " · ground ")  # the status bar's line
     early = readout(session.states["elevation"].progress, config, 64.0, 64.0)
-    assert [name for name, _ in early.facts] == ["ground"]  # no water, biome or climate before their stages
+    # no water, biome or climate before their stages; the land mask is elevation's own
+    assert [name for name, _ in early.facts] == ["ground", "land mask"]
     assert early.key == found.key  # the same cell
     assert readout(progress, config, -1.0, 10.0) is None
 

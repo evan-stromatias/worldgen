@@ -33,6 +33,7 @@ class Elevation:
     """The heightfield and the masks that shaped it, kept for the world UI's layers; vertex grids."""
 
     heights: np.ndarray  # metres
+    mask: np.ndarray | None = None  # 0-1, land membership; None for a continent without falloff (land everywhere)
     mountains: np.ndarray | None = None  # 0-1, the range mask; None without mountains
     terraces: np.ndarray | None = None  # 0-1, the terrace mask; None without terraces
 
@@ -62,8 +63,12 @@ def generate(
     hills = fbm(hills_noise, x + wx, z + wz, **cfg.noise.model_dump())
     hills = (hills - hills.min()) / max(np.ptp(hills), 1e-12)
 
+    mask = None
     if cfg.mask == "continent":
         shaped = hills
+        if cfg.falloff > 0:
+            mask = _edge_falloff(cfg, world, mask_noise, x, z)
+            shaped = hills * mask
     else:
         # One island is the archipelago's special case: a single island of radius 0.5 in the centre
         islands = (
@@ -83,6 +88,7 @@ def generate(
             weight += island
             stature += island * np.sqrt(radius / largest)  # smaller islands are lower, not steeper
         land = 1 - sea
+        mask = land
         height = np.divide(stature, weight, out=np.ones_like(u), where=weight > 0)
         shaped = land * (LAND_BASE + (1 - LAND_BASE) * hills * height)
 
@@ -105,7 +111,22 @@ def generate(
         if terraces_rng is None:
             raise ValueError("terraces are enabled but no generator was given for them")
         heights, steps = _terrace(heights, x, z, ranges, world, cfg.terraces, terraces_rng)
-    return Elevation(heights, ranges, steps)
+    return Elevation(heights, mask, ranges, steps)
+
+
+def _edge_falloff(
+    cfg: ElevationSection,
+    world: WorldSection,
+    mask_noise: Perlin,
+    x: np.ndarray,
+    z: np.ndarray,
+) -> np.ndarray:
+    """A continent's coast: 0 at the world borders rising to 1 over `falloff` of the width, bent by the same
+    outline noise the island masks use, so the land sinks into the sea along all four edges."""
+    u, v = x / world.size_cells, z / world.size_cells
+    bend = 1 + cfg.mask_distortion * fbm(mask_noise, x, z, frequency=MASK_CYCLES / world.size_cells, octaves=2)
+    edge = np.minimum.reduce([u, 1 - u, v, 1 - v])  # share of the world width from the nearest border
+    return smoothstep(0.0, cfg.falloff, edge * bend)
 
 
 def coverage_mask(noise: Perlin, x: np.ndarray, z: np.ndarray, frequency: float, coverage: float) -> np.ndarray:

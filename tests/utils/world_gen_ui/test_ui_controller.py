@@ -109,7 +109,7 @@ def test_run_follows_the_stages_and_draws_the_map(small_controller):
     assert c.layers() == ()
     c.act(ev.RunStage("hydrology"))
     c.update()
-    assert c.layer == "hydrology" and c.layers() == ("elevation", "hydrology")
+    assert c.layer == "hydrology" and c.layers() == ("elevation", "land mask", "hydrology")
     assert c.stage_texts()["hydrology"][1].startswith("done")
     assert c.message.startswith("ran elevation, hydrology in")
     key, job = c._drawing
@@ -124,6 +124,23 @@ def test_run_follows_the_stages_and_draws_the_map(small_controller):
     c.act(ev.LayerChosen("temperature"))
     c.update()
     assert c._drawing[0][0] == "temperature"
+
+
+def test_a_pending_layer_is_shown_when_the_run_settles(small_controller):
+    c = small_controller
+    c.pending_layer = "land mask"
+    c.act(ev.RunAll())
+    c.update()
+    assert c.layer == "land mask"
+    assert c._wanted is not None and c._wanted[0] == "land mask"
+
+
+def test_a_pending_layer_without_a_result_is_ignored(small_controller):
+    c = small_controller
+    c.pending_layer = "erosion"  # the small recipe has erosion off
+    c.act(ev.RunStage("elevation"))
+    c.update()
+    assert c.layer == "elevation"  # the map follows the run instead
 
 
 def test_edits_and_a_new_seed_make_stages_stale(small_controller):

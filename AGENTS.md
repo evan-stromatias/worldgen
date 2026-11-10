@@ -24,7 +24,8 @@ uv run worldgen-ui --config examples/archipelago.yaml --seed 3 --run-all
 uv run python examples/generate.py                             # generate, export, load, show one patch in a window
 ```
 
-The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pictures of the window.
+The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pictures of the window;
+`--layer "land mask"` picks the map layer it settles on.
 
 ## Layout
 
@@ -94,4 +95,6 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
   `--screenshot`) and look at it before calling the work done.
 - **Keep the README current.** Whenever a change alters how generation works, update "How a terrain is
   made" in `README.md` in the same change: the stages, their order, what each does, the recipe settings
-  it names and the files it writes. Check the stage descriptions against the code.
+  it names and the files it writes. Check the stage descriptions against the code. Whenever the recipe
+  format changes (a key added, renamed, removed or re-defaulted), update the commented example under
+  "Recipes" in the same change.

@@ -115,13 +115,13 @@ class TerracesSection(Section):
 
 
 class ElevationSection(Section):
-    """The base heightfield: noise shaped by a continent mask."""
+    """The base heightfield: noise shaped by a land mask."""
 
     mask: Literal["island", "archipelago", "continent"] = Field(
         default="island",
         description=(
             "island: one island, falling off into sea at the edges; archipelago: several islands; "
-            "continent: no falloff."
+            "continent: land out to the edges, unless falloff sinks them into the sea."
         ),
     )
     mask_falloff: Range = Field(
@@ -129,6 +129,10 @@ class ElevationSection(Section):
         description="Distance from an island's centre (1 = its radius) where land starts and stops falling into sea.",
     )
     mask_distortion: float = Field(default=0.15, ge=0, le=1, description="How much noise bends the island outline.")
+    falloff: float = Field(
+        default=0.0, ge=0, le=0.5,
+        description="mask: continent only — share of the world width the coast lies within; 0 keeps land to the edges.",
+    )
     shore: float = Field(default=0.08, gt=0, lt=1, description="Shaped noise value (0-1) at which land meets the sea.")
     max_height: float = Field(default=60.0, gt=0, description="Metres above sea level at the highest point.")
     sea_floor: float = Field(default=-12.0, description="Height of the deepest open sea, in metres.")

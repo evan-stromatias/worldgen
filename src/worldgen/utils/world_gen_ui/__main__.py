@@ -29,6 +29,9 @@ def main() -> None:
     parser.add_argument("--width", type=int, default=1600, help="Window width in pixels.")
     parser.add_argument("--height", type=int, default=900, help="Window height in pixels.")
     parser.add_argument("--run-all", action="store_true", help="Run every stage at start, as Run all does.")
+    parser.add_argument(
+        "--layer", help="Show this map layer once the run settles (with --run-all), e.g. --layer \"land mask\"."
+    )
     parser.add_argument("--log", action="store_true", help="Open the log window from the start.")
     parser.add_argument("--3d", dest="three_d", action="store_true", help="Show the map in 3D from the start.")
     parser.add_argument("--light", action="store_true", help="Start in light mode, not dark (the button at the top right switches).")
@@ -43,6 +46,11 @@ def main() -> None:
         recipe = Recipe.load(args.config) if args.config else Recipe.defaults()
     except ConfigError as e:
         sys.exit(str(e))
+    if args.layer is not None:
+        from worldgen.utils.world_gen_ui.model.layers import LAYERS
+
+        if args.layer not in LAYERS:
+            parser.error(f"--layer must be one of: {', '.join(LAYERS)}")
 
     from worldgen.utils.gen_ui import app  # opens no window until asked
     from worldgen.utils.world_gen_ui.controller import Controller
@@ -56,6 +64,7 @@ def main() -> None:
             if recipe.seed_hint is not None and args.seed == parser.get_default("seed"):
                 controller.session.seed = recipe.seed_hint  # a terrain bundle's seed, unless --seed was given
             controller.three_d = args.three_d
+            controller.pending_layer = args.layer
             if args.log:
                 controller.toggle_log()
             if args.run_all:

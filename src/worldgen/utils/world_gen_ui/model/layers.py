@@ -17,6 +17,7 @@ from worldgen.utils.gen_ui.model.readout import Fact, Readout
 # Layer -> the stage whose result it shows
 LAYERS = {
     "elevation": "elevation",
+    "land mask": "elevation",
     "mountain mask": "elevation",
     "terrace mask": "elevation",
     "erosion": "erosion",
@@ -34,7 +35,7 @@ MAX_SIDE = 2048  # pixels a layer image may have per side; larger worlds are sho
 LAND = ((0.0, (88, 140, 72)), (0.35, (150, 162, 92)), (0.7, (140, 110, 82)), (1.0, (242, 242, 242)))  # x max height
 TEMPERATURE = ((-10, (40, 60, 170)), (0, (120, 170, 230)), (10, (238, 238, 218)), (20, (240, 170, 80)), (35, (190, 40, 30)))
 MOISTURE = ((0.0, (205, 172, 112)), (0.5, (122, 172, 82)), (1.0, (40, 110, 172)))
-MASK = ((0.0, (238, 236, 222)), (0.5, (196, 150, 104)), (1.0, (120, 70, 50)))  # the mountain and terrace masks, 0-1
+MASK = ((0.0, (238, 236, 222)), (0.5, (196, 150, 104)), (1.0, (120, 70, 50)))  # the land, mountain and terrace masks, 0-1
 SEDIMENT = ((0.0, (238, 236, 222)), (0.3, (222, 196, 130)), (1.0, (150, 96, 40)))  # x the deepest (99th percentile)
 RELIEF = ((0.0, (60, 110, 160)), (0.3, (238, 236, 222)), (1.0, (150, 60, 40)))  # x the highest (99th percentile)
 CUT, DEPOSIT = np.array((196, 70, 50)), np.array((50, 110, 200))  # erosion change: ground taken, ground laid down
@@ -46,8 +47,9 @@ def layers_for_stage(stage: str) -> list[str]:
 
 
 def has_layer(layer: str, progress: Progress) -> bool:
-    """Whether `progress` has what `layer` shows: a mask layer only when the recipe made that mask, an erosion layer
-    only when the ground was eroded."""
+    """Whether `progress` has what `layer` shows: the mountain and terrace masks only when the recipe made them,
+    an erosion layer only when the ground was eroded. (The land mask always shows; a continent without falloff
+    is flat land.)"""
     if layer == "mountain mask":
         return progress.mountains is not None
     if layer == "terrace mask":
@@ -70,9 +72,12 @@ def layer_image(layer: str, progress: Progress, config: TerrainConfig) -> np.nda
     if layer in ("elevation", "erosion"):
         ground_grid = progress.heights if layer == "elevation" or progress.erosion is None else progress.erosion.heights
         image = elevation_image(ground_grid, config)
-    elif layer in ("mountain mask", "terrace mask"):
-        mask = progress.mountains if layer == "mountain mask" else progress.terraces
-        values = to_cells(mask) if mask is not None else np.zeros((world.size_cells,) * 2)
+    elif layer in ("land mask", "mountain mask", "terrace mask"):
+        if layer == "land mask":
+            mask, flat = progress.mask, 1.0  # a continent without falloff is land everywhere
+        else:
+            mask, flat = (progress.mountains if layer == "mountain mask" else progress.terraces), 0.0
+        values = to_cells(mask) if mask is not None else np.full((world.size_cells,) * 2, flat)
         image = ramp(values, MASK) * hillshade(progress.heights, cell_size)[..., None]
     elif layer == "erosion change":
         image = change_image(progress) * hillshade(progress.erosion.heights, cell_size)[..., None]
@@ -164,9 +169,11 @@ def readout(progress: Progress, config: TerrainConfig, x: float, z: float) -> Re
 
 
 def terrain_facts(progress: Progress, config: TerrainConfig, vx: int, vz: int) -> list[Fact]:
-    """How the ground at vertex (vx, vz) was shaped: the mountain and terrace masks' shares there, the stratum it
-    lies on, and what erosion took or laid down."""
+    """How the ground at vertex (vx, vz) was shaped: the land, mountain and terrace masks' shares there, the
+    stratum it lies on, and what erosion took or laid down."""
     facts: list[Fact] = []
+    if progress.mask is not None:
+        facts.append(("land mask", f"{progress.mask[vz, vx]:.0%}"))
     if progress.mountains is not None:
         facts.append(("mountains", f"{progress.mountains[vz, vx]:.0%}"))
     if progress.terraces is not None:

@@ -63,6 +63,7 @@ class Controller:
         self.world_path = _shown(out)  # where Export world writes
         self.form = recipe_form()
         self.layer: str | None = None  # the layer the map shows
+        self.pending_layer: str | None = None  # a layer to show once nothing is running (the UI's --layer)
         self.three_d = False
         self.exaggeration = 1.0
         self.descriptions = True
@@ -147,6 +148,10 @@ class Controller:
                 self._say("not saved: the recipe changed while the stages ran; press Export world again", error=True)
         if self._saving is not None:
             self._saved_or_failed()
+        if self.pending_layer is not None and not self.session.busy:
+            layer, self.pending_layer = self.pending_layer, None
+            if layer in self.layers():
+                self.layer = layer
         if self.layer is not None and self._layer_state(self.layer).progress is None:
             self.layer = None
         self._wanted = None

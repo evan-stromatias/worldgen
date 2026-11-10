@@ -1,7 +1,7 @@
 """Stage 2: weathering. Simulated droplets cut gullies and valleys, then loose ground slides to the angle it holds.
 
 The droplets follow Beyer 2015 ("Implementation of a method for hydraulic erosion"), with three departures, the
-first two for speed in numpy (docs/plans/001-phase-2/024-dramatic-terrain-TODO.md):
+first two for speed in numpy:
 
 - **Batches.** `batch` droplets step together as arrays, and their changes are added with `np.add.at`, which adds
   in index order, so a run is deterministic. A droplet sees the others' changes one step late.

@@ -29,6 +29,7 @@ class Progress:
     """
 
     heights: np.ndarray | None = None  # elevation: the heightfield, vertex grid, metres
+    mask: np.ndarray | None = None  # elevation: the land mask, vertex grid, 0-1; None when land is everywhere
     mountains: np.ndarray | None = None  # elevation: the range mask, vertex grid, 0-1; None without mountains
     terraces: np.ndarray | None = None  # elevation: the terrace mask, vertex grid, 0-1; None without terraces
     erosion: Erosion | None = None  # the eroded ground and its sediment; None when the recipe has no erosion
@@ -52,7 +53,7 @@ def _elevation(p: Progress, config: TerrainConfig, seed: int) -> Progress:
         config.world, config.elevation, np.random.default_rng([seed, ELEVATION]),
         np.random.default_rng([seed, MOUNTAINS]), np.random.default_rng([seed, TERRACES]),
     )
-    return dataclasses.replace(p, heights=made.heights, mountains=made.mountains, terraces=made.terraces)
+    return dataclasses.replace(p, heights=made.heights, mask=made.mask, mountains=made.mountains, terraces=made.terraces)
 
 
 def _erosion(p: Progress, config: TerrainConfig, seed: int) -> Progress:
