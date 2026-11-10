@@ -59,8 +59,13 @@ class Recipe:
 
     def text(self) -> str:
         """The draft as a recipe file: YAML, leaving out what is unset. `version` is this worldgen's,
-        whatever the file the recipe was read from said."""
+        whatever the file the recipe was read from said; `client` is the file's own, verbatim."""
         data = {**_without_none(self.data), "version": VERSION}
+        client = self.data.get("client")
+        if client:
+            data["client"] = client  # verbatim: _without_none is for worldgen's own optional keys
+        else:
+            data.pop("client", None)  # it defaults to an empty mapping; writing that is noise
         return HEADER + yaml.dump(data, Dumper=_Dumper, sort_keys=False, allow_unicode=True, width=110)
 
     def save(self, path: Path) -> None:

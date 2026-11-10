@@ -363,7 +363,8 @@ class BiomesSection(Section):
 
 
 class TerrainConfig(Section):
-    """A whole terrain.yaml: the world grid and the stages 1-5 (elevation, erosion, hydrology, climate, biomes)."""
+    """A whole terrain.yaml: the world grid and the stages 1-5 (elevation, erosion, hydrology, climate,
+    biomes), plus `client`, a client's own data, kept verbatim and never read."""
 
     version: Annotated[str, BeforeValidator(str)] = Field(
         default=VERSION,
@@ -375,6 +376,10 @@ class TerrainConfig(Section):
     hydrology: HydrologySection = Field(default_factory=HydrologySection)
     climate: ClimateSection = Field(default_factory=ClimateSection)
     biomes: BiomesSection = Field(default_factory=BiomesSection)
+    client: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Client-owned data; stored and exported verbatim, never read by worldgen.",
+    )
 
     @model_validator(mode="before")
     @classmethod

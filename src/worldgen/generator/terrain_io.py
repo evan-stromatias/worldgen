@@ -47,10 +47,13 @@ def generate_terrain(
 
 def export_terrain(terrain: TerrainData, out_dir: Path | str) -> None:
     """Write `terrain` as a terrain bundle under `out_dir`: terrain.yaml, terrain.npz and preview.png.
-    terrain.yaml's `version` is this worldgen's version, whatever the loaded recipe's said."""
+    terrain.yaml's `version` is this worldgen's version, whatever the loaded recipe's said, and its
+    `client` is the recipe's own, verbatim (left out when empty, as it defaults to)."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     data = {"seed": terrain.seed, **terrain.config.model_dump(mode="json"), "version": VERSION}
+    if not data["client"]:
+        del data["client"]
     (out_dir / RECIPE_FILE).write_text(HEADER + yaml.dump(data, sort_keys=False, allow_unicode=True, width=110),
                                         encoding="utf-8")
     meta = {"lakes": [dataclasses.asdict(lake) for lake in terrain.lakes], "rivers": terrain.rivers}
