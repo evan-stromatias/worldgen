@@ -1,3 +1,6 @@
+2026-11-10, 0.2.0:
+  - clients get their own ignored field
+
 2026-11-10, 0.1.3:
   - more info in the tooltips
 
