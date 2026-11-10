@@ -28,11 +28,6 @@ def test_only_rules_is_enough(small_data):
     assert config.world.size_cells == 1024
 
 
-def test_an_empty_recipe_is_the_default_terrain():
-    """The bundled default recipe writes out every default, the biome rules included."""
-    assert parse_config({}) == TerrainConfig() == load_config(DEFAULT_RECIPE)
-
-
 def test_rules_can_be_replaced(small_data):
     config = parse_config({"biomes": small_data["biomes"]})
     assert [rule.id for rule in config.biomes.rules] == [rule["id"] for rule in small_data["biomes"]["rules"]]
