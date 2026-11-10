@@ -1,6 +1,6 @@
 [project]
 name = "worldgen"
-version = "0.1.2"
+version = "0.1.3"
 description = "Generic procedural terrain generation: elevation, erosion, hydrology, climate and biomes, from a YAML recipe and a seed. With a rayscreen UI."
 readme = "README.md"
 license = "GPL-3.0-or-later"
