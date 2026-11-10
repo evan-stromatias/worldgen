@@ -1,3 +1,6 @@
+2026-11-10, 0.1.1:
+  - dummy change
+
 2026-11-10, 0.1.0:
   - Standalone terrain generator: five stages (elevation, erosion, hydrology, climate, biomes) from a
     YAML recipe and a seed
