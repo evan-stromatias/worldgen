@@ -14,11 +14,11 @@ import math
 import pyray as rl
 
 from rayscreen import SMALL, TEXT, Theme
+from worldgen.mesh.gpu import GpuTexture
 from worldgen.ui.model.map.plan_view import metres_per_pixel
 from worldgen.ui.model.map.terrain import Picture
 from worldgen.ui.model.map.viewpoint import Viewpoint
 from worldgen.ui.view.gl.terrain_view import TerrainView
-from worldgen.mesh.gpu import GpuTexture
 
 BACKGROUND = rl.Color(32, 36, 44, 255)
 GRID = rl.Color(70, 78, 92, 255)

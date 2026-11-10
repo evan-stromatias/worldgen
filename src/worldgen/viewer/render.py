@@ -11,9 +11,9 @@ import numpy as np
 import pyray as rl
 import raylib
 
-from worldgen.viewer.config import ViewerSettings
-from worldgen.mesh.gpu import GpuMesh, GpuPatch
 from worldgen.mesh.builders import sea_frame
+from worldgen.mesh.gpu import GpuMesh, GpuPatch
+from worldgen.viewer.config import ViewerSettings
 
 _SHADERS = files("worldgen").joinpath("viewer/shaders")
 TERRAIN_VS, TERRAIN_FS = _SHADERS.joinpath("viewer_terrain.vs"), _SHADERS.joinpath("viewer_terrain.fs")

@@ -23,7 +23,7 @@ from its own stream, so tuning one stage never reshuffles another's.
    rather than taken from a library, so a terrain never changes with a dependency upgrade.
 2. **Erosion** — weathering, when the recipe turns it on. Simulated droplets cut gullies and valleys
    and leave sediment where they slow, following [Beyer 2015, *"Implementation of a method for
-   hydraulic erosion"*](docs/implementation%20of%20a%20methode%20for%20hydraulic%20erosion.pdf),
+   hydraulic erosion"*](docs/research/implementation%20of%20a%20methode%20for%20hydraulic%20erosion.pdf),
    batched for numpy and run from coarse grids to the full one so the valleys are mountain-sized, not
    rills. Then loose ground slides until no slope is steeper than it holds (talus
    and rock angles), after [Musgrave, Kolb and Mace 1989, *"The synthesis and rendering of eroded

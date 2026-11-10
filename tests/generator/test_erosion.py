@@ -5,10 +5,10 @@ import math
 import numpy as np
 import pytest
 
-from worldgen.generator.stages import erosion
 from worldgen.generator.config import ErosionSection, parse_config
 from worldgen.generator.grid import distance_to
 from worldgen.generator.pipeline import STAGES, Progress, generate, run_stage
+from worldgen.generator.stages import erosion
 
 SETTINGS = {"enabled": True, "droplets": 0.5, "levels": 2, "lifetime": 20, "thermal_iterations": 20}
 

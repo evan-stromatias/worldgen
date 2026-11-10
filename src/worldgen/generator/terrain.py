@@ -10,9 +10,9 @@ from pathlib import Path
 
 import numpy as np
 
-from worldgen.generator.stages import biomes, climate
 from worldgen.generator.config import TerrainConfig
 from worldgen.generator.grid import to_cells
+from worldgen.generator.stages import biomes, climate
 from worldgen.generator.stages.hydrology import Lake
 
 

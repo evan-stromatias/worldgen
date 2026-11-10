@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 from common import SEED
-from worldgen.generator.stages import elevation, hydrology
 from worldgen.generator.pipeline import ELEVATION, HYDROLOGY
+from worldgen.generator.stages import elevation, hydrology
 
 
 @pytest.fixture(scope="module")

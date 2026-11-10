@@ -1,7 +1,7 @@
 import numpy as np
 
-from worldgen.generator.stages import biomes
 from worldgen.generator.config import parse_config
+from worldgen.generator.stages import biomes
 
 
 def inputs(**values) -> biomes.CellInputs:
