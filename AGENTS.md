@@ -30,7 +30,8 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
 ## Layout
 
 - `src/worldgen/generator/`: the generator. `config.py` is the recipe (`TerrainConfig`: the `world`
-  grid and one section per stage, validated with pydantic, YAML-path error messages); `pipeline.py` runs
+  grid and one section per stage, plus `client`, a client's own data kept verbatim, validated with
+  pydantic, YAML-path error messages); `pipeline.py` runs
   the five stages in order; `stages/` holds one module per stage (`elevation`, `erosion`, `hydrology`,
   `climate`, `biomes`), plus `noise.py` (own gradient noise, so a terrain never changes with a dependency
   upgrade), `grid.py` (array helpers), `preview.py` (the hillshaded preview and the deterministic

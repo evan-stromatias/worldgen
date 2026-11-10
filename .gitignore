@@ -11,10 +11,10 @@ dist/
 # Test and tool caches
 .pytest_cache/
 .ruff_cache/
+.coverage
 
 # Generated terrain bundles
 /out/
 /terrain*/
 
 .claude/
-.coverage

@@ -38,6 +38,24 @@ def test_seed_is_rejected(small_data):
     assert "pass it with --seed" in errors_for(small_data)
 
 
+def test_client_data_is_kept_verbatim(small_data):
+    """A client embeds its own recipe's sections under `client`; worldgen stores them, never reads them."""
+    client = {"version": 3, "towns": {"count": 5, "capitol": None}, "biome_flora": {"forest": ["oak"]}}
+    assert parse_config({**small_data, "client": client}).client == client
+    assert parse_config(small_data).client == {}  # left out: an empty mapping
+
+
+def test_client_must_be_a_mapping(small_data):
+    small_data["client"] = "towns"
+    assert "client: Input should be a valid dictionary" in errors_for(small_data)
+
+
+def test_top_level_keys_beside_client_stay_forbidden(small_data):
+    """Only `client` loosens the top level, so a typo of a worldgen key is still named."""
+    small_data["towns"] = {}
+    assert "towns: Extra inputs are not permitted" in errors_for(small_data)
+
+
 def test_unknown_key_names_its_path(small_data):
     small_data["hydrology"]["lake_min_aera"] = 3
     assert "hydrology.lake_min_aera: Extra inputs are not permitted" in errors_for(small_data)

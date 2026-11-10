@@ -89,6 +89,11 @@ def test_a_type_without_a_widget_is_an_error():
         _section(Odd, "odd", "Odd")
 
 
+def test_client_is_kept_but_not_drawn(form):
+    """client is a client's own data: the draft preserves it verbatim, but a one-line box is no editor for it."""
+    assert ("client",) not in {path for path, _ in form.walk()}
+
+
 def test_recipe_get():
     recipe = Recipe.load(DEFAULT_RECIPE)
     assert recipe.get(("world", "size_cells")) == 1024

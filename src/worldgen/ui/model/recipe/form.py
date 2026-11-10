@@ -184,7 +184,9 @@ def stepped(value: Any, step: Any, up: bool, bounds: Bounds) -> int | None:
     return None if outside else new
 
 
-HIDDEN = {(TerrainConfig, "version")}
+# Fields the form does not offer: version is stamped on save; client is a client's own data — the draft
+# keeps it verbatim, but a one-line YAML box is no editor for a whole client recipe
+HIDDEN = {(TerrainConfig, "version"), (TerrainConfig, "client")}
 KNOWN_KEYS = {}  # dicts whose keys come from elsewhere: one row per key
 BIOME_IDS: set = set()  # fields that pick from the recipe's biome ids
 STEPS = {(WorldSection, "size_cells"): "patch_cells"}  # ints that must be a multiple of another field

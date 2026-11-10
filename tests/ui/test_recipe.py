@@ -26,6 +26,22 @@ def test_the_saved_text_stamps_the_package_version(recipe):
     assert yaml.safe_load(recipe.text())["version"] == VERSION
 
 
+def test_client_data_round_trips_verbatim(tmp_path):
+    """client is a client's own data: the form never shows it, the draft keeps it exactly, nulls included."""
+    data = yaml.safe_load(DEFAULT_RECIPE.read_text(encoding="utf-8"))
+    data["client"] = {"version": 3, "towns": {"capitol": None, "count": 5}}
+    path = tmp_path / "client.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    recipe = Recipe.load(path)
+    assert recipe.valid and recipe.config.client["towns"]["count"] == 5
+    assert yaml.safe_load(recipe.text())["client"] == data["client"]
+
+
+def test_an_empty_client_section_is_not_saved(recipe):
+    """client defaults to an empty mapping; writing that into every saved recipe would be noise."""
+    assert "client" not in yaml.safe_load(recipe.text())
+
+
 @pytest.mark.parametrize(
     ("path", "value", "where", "message"),
     [

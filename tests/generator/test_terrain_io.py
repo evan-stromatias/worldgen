@@ -1,5 +1,7 @@
 """The terrain bundle: generate_terrain, export_terrain and load_terrain round-trips."""
 
+import dataclasses
+
 import numpy as np
 import pytest
 import yaml
@@ -68,6 +70,26 @@ def test_export_stamps_the_package_version(small_terrain, tmp_path):
     export_terrain(small_terrain, out)
     data = yaml.safe_load((out / "terrain.yaml").read_text())
     assert data["version"] == VERSION
+
+
+def test_client_data_round_trips_through_the_bundle(small_config, small_terrain, tmp_path):
+    """A bundle carries the client recipe that made it: `client` is exported verbatim and recovered on load."""
+    client = {"version": 3, "towns": {"count": 5, "capitol": None}, "biome_flora": {"forest": ["oak"]}}
+    config = small_config.model_copy(update={"client": client})
+    terrain = dataclasses.replace(small_terrain, config=config)
+    out = tmp_path / "terrain"
+    export_terrain(terrain, out)
+    data = yaml.safe_load((out / "terrain.yaml").read_text())
+    assert data["client"] == client
+    assert load_terrain(out).config.client == client
+
+
+def test_an_empty_client_section_is_not_written(small_terrain, tmp_path):
+    """client defaults to an empty mapping; writing that into every bundle would be noise."""
+    out = tmp_path / "terrain"
+    export_terrain(small_terrain, out)
+    assert "client" not in yaml.safe_load((out / "terrain.yaml").read_text())
+    assert load_terrain(out).config.client == {}
 
 
 def test_a_bundle_from_another_version_still_loads(small_terrain, tmp_path):

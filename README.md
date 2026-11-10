@@ -188,12 +188,18 @@ documentation of every field.
 checks it: whether a bundle written by another version still works for you is your call as the client.
 But when reading a bundle does fail, the error names the version in its file.
 
+A recipe may also carry a `client` section: any mapping, validated only as far as "is a mapping" and
+never read by worldgen. A client embedding its own recipe in this file puts its own sections there, and
+`export_terrain` writes `client` back into the bundle's `terrain.yaml` verbatim — so loading a bundle
+recovers the client's own config with the terrain.
+
 ## Project structure
 
 One package, `worldgen`, under `src/`:
 
 - `worldgen/generator/` — the offline generator: `terrain.yaml` + seed → elevation, water, biomes, lakes
-  and rivers. `config.py` is the recipe (`TerrainConfig`, the `world` grid plus one section per stage),
+  and rivers. `config.py` is the recipe (`TerrainConfig`, the `world` grid plus one section per stage, plus
+  the verbatim `client` mapping),
   `pipeline.py` runs the stages in order, `stages/` holds one module per stage (`elevation`, `erosion`,
   `hydrology`, `climate`, `biomes`), `noise.py` and `grid.py` the array helpers they share. `terrain.py`
   is the terrain in memory, `terrain_io.py` the bundle on disk (`generate_terrain`, `export_terrain`,
