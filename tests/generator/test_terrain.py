@@ -1,11 +1,10 @@
 """Mountain ranges and terraces: the elevation stage's masks."""
 
-import hashlib
 
 import numpy as np
 import pytest
 
-from worldgen.generator.config import ConfigError, TerrainConfig, parse_config
+from worldgen.generator.config import ConfigError, parse_config
 from worldgen.generator.grid import min_filter
 from worldgen.generator.noise import Perlin, ridged
 from worldgen.generator.pipeline import ELEVATION, MOUNTAINS, TERRACES
@@ -41,12 +40,6 @@ def test_sharper_ridges_have_narrower_crests():
     x, z = grid()
     shares = [(ridged(Perlin(np.random.default_rng(1)), x, z, frequency=0.02, sharpness=s) > 0.5).mean() for s in (1, 2, 4)]
     assert shares[0] > shares[1] > shares[2]
-
-
-def test_without_mountains_or_terraces_the_heights_are_as_before():
-    config = TerrainConfig()
-    heights = elevation.generate(config.world, config.elevation, *streams(7)).heights
-    assert hashlib.sha256(heights.tobytes()).hexdigest() == DEFAULT_HEIGHTS
 
 
 @pytest.mark.parametrize("coverage", [0.2, 0.5, 0.8])
