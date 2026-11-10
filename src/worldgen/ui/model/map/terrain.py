@@ -11,9 +11,9 @@ import numpy as np
 
 from worldgen.generator.config import TerrainConfig
 from worldgen.generator.pipeline import Progress
-from worldgen.ui.model.map.layers import MAX_SIDE, ground_and_water, layer_image
 from worldgen.mesh.builders import PatchMeshArrays
 from worldgen.mesh.overview import Overview, downsample, overview_stride
+from worldgen.ui.model.map.layers import MAX_SIDE, ground_and_water, layer_image
 
 MAX_CELLS = 512  # cells per side of the 3D terrain, at most
 

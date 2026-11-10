@@ -7,11 +7,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from worldgen.generator.config import TerrainConfig
+from worldgen.generator.grid import to_cells
 from worldgen.generator.stages import biomes, climate, elevation, erosion, hydrology
 from worldgen.generator.stages.climate import Climate
-from worldgen.generator.config import TerrainConfig
 from worldgen.generator.stages.erosion import Erosion
-from worldgen.generator.grid import to_cells
 from worldgen.generator.stages.hydrology import Hydrology
 from worldgen.generator.terrain import TerrainData
 

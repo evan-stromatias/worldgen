@@ -14,9 +14,9 @@ from worldgen.generator import pipeline, preview
 from worldgen.generator.config import parse_config
 from worldgen.generator.pipeline import Stage, generate
 from worldgen.ui.model.map.layers import LAYERS, has_layer, readout, render_layer
+from worldgen.ui.model.map.terrain import picture
 from worldgen.ui.model.session import Session
 from worldgen.ui.model.stages import STAGES, Status
-from worldgen.ui.model.map.terrain import picture
 
 DONE, SKIPPED, STALE, NOT_RUN = Status.DONE, Status.SKIPPED, Status.STALE, Status.NOT_RUN
 

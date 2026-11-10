@@ -5,11 +5,11 @@ import hashlib
 import numpy as np
 import pytest
 
-from worldgen.generator.stages import elevation
 from worldgen.generator.config import ConfigError, TerrainConfig, parse_config
 from worldgen.generator.grid import min_filter
 from worldgen.generator.noise import Perlin, ridged
 from worldgen.generator.pipeline import ELEVATION, MOUNTAINS, TERRACES
+from worldgen.generator.stages import elevation
 
 # elevation.generate's heights for the default recipe and seed 7, from before mountains and terraces existed
 DEFAULT_HEIGHTS = "feaa73afbc90ed918ff0b2c7b31ead779939faf2735375fcfa3e5855dd65b2d5"

@@ -18,19 +18,19 @@ import pyray as rl
 import rayscreen
 from rayscreen import Column, Menu, MenuItem, ScreenManager, Theme, Window, mouse_free
 from worldgen.generator.config import ConfigError
-from worldgen.ui.model.recipe.form import Kind, blank, box_kind, parse, recipe_form
-from worldgen.ui.model.map.layers import LAYERS, has_layer, layers_for_stage, readout
 from worldgen.ui.model.log import Log, Source
+from worldgen.ui.model.map.layers import LAYERS, has_layer, layers_for_stage, readout
 from worldgen.ui.model.map.plan_view import metres_per_pixel, to_world
 from worldgen.ui.model.map.readout import Readout
-from worldgen.ui.model.recipe.recipe import FieldPath, Recipe, renumbered
-from worldgen.ui.model.recipe.rules import RULES, can_move, can_remove, new_rule
-from worldgen.ui.model.saving import is_terrain, occupied, save_terrain
-from worldgen.ui.model.session import Session, StageState
-from worldgen.ui.model.recipe.sizes import size_notes
-from worldgen.ui.model.stages import STAGES, Status
 from worldgen.ui.model.map.terrain import Picture, picture
 from worldgen.ui.model.map.viewpoint import FOVY, Viewpoint
+from worldgen.ui.model.recipe.form import Kind, blank, box_kind, parse, recipe_form
+from worldgen.ui.model.recipe.recipe import FieldPath, Recipe, renumbered
+from worldgen.ui.model.recipe.rules import RULES, can_move, can_remove, new_rule
+from worldgen.ui.model.recipe.sizes import size_notes
+from worldgen.ui.model.saving import is_terrain, occupied, save_terrain
+from worldgen.ui.model.session import Session, StageState
+from worldgen.ui.model.stages import STAGES, Status
 from worldgen.ui.view import events as ev
 from worldgen.ui.view import windows
 from worldgen.ui.view.bars import Shown

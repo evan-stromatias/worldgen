@@ -1,7 +1,7 @@
 import numpy as np
 
-from worldgen.generator.stages import elevation
 from worldgen.generator.config import ArchipelagoSection, parse_config
+from worldgen.generator.stages import elevation
 
 
 def test_islands_are_placed_apart_and_inside_the_world():

@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from typing import Any
 
 import rayscreen
-from worldgen.ui.model.recipe.form import Kind, SectionSpec, stepped
 from worldgen.ui.model.map.layers import LAYERS
+from worldgen.ui.model.recipe.form import Kind, SectionSpec, stepped
 from worldgen.ui.model.recipe.recipe import FieldPath, Recipe
 from worldgen.ui.model.recipe.rules import RULES
 from worldgen.ui.view import form as form_ids

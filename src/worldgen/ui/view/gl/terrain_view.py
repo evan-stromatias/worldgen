@@ -11,11 +11,11 @@ import numpy as np
 import pyray as rl
 
 from rayscreen import Theme
+from worldgen.mesh.gpu import GpuPatch
 from worldgen.ui.model.map.terrain import Picture
 from worldgen.ui.model.map.viewpoint import FOVY, Viewpoint
 from worldgen.viewer.config import ViewerSettings
 from worldgen.viewer.render import NO_FOG, Renderer
-from worldgen.mesh.gpu import GpuPatch
 
 
 class TerrainView:
