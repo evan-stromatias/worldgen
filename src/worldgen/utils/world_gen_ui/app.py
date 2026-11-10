@@ -1,6 +1,5 @@
-"""The window and its loop both generator UIs run, as rayscreen's README has a game do it: the controller renders
-its view (a town, a world) into its texture, rayscreen draws the screens over it, then the controller takes the
-events rayscreen returns."""
+"""The window and its loop, as rayscreen's README has a game do it: the controller renders its view into its
+texture, rayscreen draws the screens over it, then the controller takes the events rayscreen returns."""
 
 from pathlib import Path
 from typing import Protocol
@@ -11,7 +10,7 @@ from rayscreen import HIGHDPI, Event, ScreenManager, Theme, follow_wayland_mouse
 
 SCREENSHOT_FRAMES = 3  # frames drawn before a scripted screenshot, so the layout has settled
 # The frame cap while the user acts, and otherwise. rayscreen lays the screens out every frame (about 10 ms
-# for the town screen, in Python), holding the GIL the generators' workers need: idle frames are kept few
+# for the world screen, in Python), holding the GIL the generator's workers need: idle frames are kept few
 FPS, IDLE_FPS = 60, 12
 QUIET = 0.5  # seconds after the last input before the cap drops
 
@@ -52,9 +51,9 @@ def open_window(width: int, height: int, title: str, minimum: tuple[int, int], m
 
 
 def run(controller: Controller, theme: Theme, screenshot: Path | None = None) -> None:
-    """Until the window closes; with `screenshot`, save a frame once the controller has settled (the town or
-    the whole sheet built and drawn, the stages run), then stop. The frame rate drops while the user does
-    nothing, to leave the workers the GIL."""
+    """Until the window closes; with `screenshot`, save a frame once the controller has settled (the terrain
+    drawn, the stages run), then stop. The frame rate drops while the user does nothing, to leave the workers
+    the GIL."""
     frames, last_input = 0, 0.0
     while not rl.window_should_close():
         follow_wayland_mouse()

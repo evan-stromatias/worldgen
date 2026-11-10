@@ -1,4 +1,4 @@
-"""The recipe as the form shows it, around `gen_ui`'s form: a block per recipe section in the recipe's order,
+"""The recipe as the form shows it, around `view/form.py`'s form: a block per recipe section in the recipe's order,
 each a stage's under a header with its status, Reset and Run; the biome rules as cards, each with its buttons to
 move or remove it. No raylib.
 
@@ -9,9 +9,11 @@ from collections.abc import Mapping
 
 from rayscreen import ROW, SMALL, Button, CheckBox, Column, Fill, Label, Node, Row, Tone, Tooltip
 from worldgen.proc_gen.world.config import yaml_path
-from worldgen.utils.gen_ui.model.form import FieldSpec, SectionSpec
-from worldgen.utils.gen_ui.model.recipe import FieldPath
-from worldgen.utils.gen_ui.view.form import (
+from worldgen.utils.world_gen_ui.model.form import FieldSpec, SectionSpec
+from worldgen.utils.world_gen_ui.model.recipe import FieldPath
+from worldgen.utils.world_gen_ui.model.rules import can_move, can_remove
+from worldgen.utils.world_gen_ui.model.stages import STAGES, Status
+from worldgen.utils.world_gen_ui.view.form import (
     ADD,
     DOWN,
     ON,
@@ -26,8 +28,6 @@ from worldgen.utils.gen_ui.view.form import (
     problems_below,
     swatch,
 )
-from worldgen.utils.world_gen_ui.model.rules import can_move, can_remove
-from worldgen.utils.world_gen_ui.model.stages import STAGES, Status
 
 type StageTexts = Mapping[str, tuple[Status, str]]  # each stage's status, and how to say it ("done 2.31 s")
 

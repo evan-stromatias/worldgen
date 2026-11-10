@@ -1,6 +1,6 @@
 """What the world's grid settings come to in metres, shown next to their boxes."""
 
-from worldgen.utils.gen_ui.model.recipe import Recipe
+from worldgen.utils.world_gen_ui.model.recipe import Recipe
 from worldgen.utils.world_gen_ui.model.sizes import PATCH_CELLS, SIZE_CELLS, size_notes
 
 

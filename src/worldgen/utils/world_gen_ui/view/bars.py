@@ -1,13 +1,15 @@
 """The world screen's bars as rayscreen specs: the map's (layer, 2D or 3D, the 3D heights), the recipe's (seed,
-Run all and Stop all, the recipe's file, the terrain's folder), the problems, the status line; and `Shown`, the
-model's values they display. No raylib.
+Run all and Stop all, the recipe's file, the terrain's folder, the light/dark button at the top right), the
+problems, the status line; and `Shown`, the model's values they display. No raylib.
 """
 
 from dataclasses import dataclass, field
 
 from rayscreen import (
     GAP,
+    MOON,
     SMALL,
+    SUN,
     Button,
     CheckBox,
     Column,
@@ -26,9 +28,9 @@ from rayscreen import (
     TextBox,
     Toggle,
     Tone,
+    icon_text,
 )
 from rayscreen.specs import walk
-from worldgen.utils.gen_ui.view.bars import theme_button, theme_text
 from worldgen.utils.world_gen_ui.model.layers import LAYERS
 from worldgen.utils.world_gen_ui.model.stages import Status
 from worldgen.utils.world_gen_ui.view.stages import TONES, stage_ids
@@ -38,6 +40,17 @@ HALVES_MINIMUM = (320.0, 560.0)  # pixels: the map, and the recipe's bars
 NO_LAYER = "none yet"
 EXAGGERATIONS = (1.0, 2.0, 4.0)  # 3D heights, times the real ones
 LISTED_PROBLEMS = 8  # in the Problems panel; the rest are counted
+THEME = "theme"  # the theme button's id, and its event
+ICON_BUTTON = 34.0  # a button showing one of raygui's 16-pixel icons
+
+
+def theme_button(dark: bool) -> Button:
+    return Button(THEME, theme_text(dark), width=ICON_BUTTON)
+
+
+def theme_text(dark: bool) -> str:
+    """The theme button's icon: what it switches to, the sun in dark mode and the moon in light."""
+    return icon_text(SUN if dark else MOON)
 
 
 @dataclass(slots=True)

@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pytest
 
-from worldgen.utils.gen_ui.model.viewpoint import FOVY, MAX_PITCH, MIN_PITCH, Viewpoint
+from worldgen.utils.world_gen_ui.model.viewpoint import FOVY, MAX_PITCH, MIN_PITCH, Viewpoint
 
 
 def test_it_is_kept_until_the_world_changes_size():

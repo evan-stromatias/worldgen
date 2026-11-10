@@ -5,9 +5,9 @@ import copy
 import yaml
 
 from common import SEED, SMALL, inline_executor
-from worldgen.utils.gen_ui.model.log import Log, Source
-from worldgen.utils.gen_ui.model.recipe import Recipe
 from worldgen.utils.world_gen_ui.controller import Controller, log_news
+from worldgen.utils.world_gen_ui.model.log import Log, Source
+from worldgen.utils.world_gen_ui.model.recipe import Recipe
 from worldgen.utils.world_gen_ui.view import events as ev
 
 

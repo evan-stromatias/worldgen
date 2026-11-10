@@ -1,5 +1,5 @@
-"""A recipe's sections as rayscreen specs, built from plan 013's form specs, so a new field shows up with no change
-here; both generator UIs draw their forms with it (plan 024). No raylib: the tree is tested without a window.
+"""A recipe's sections as rayscreen specs, built from `model/form.py`'s specs, so a new recipe field shows up
+with no change here. No raylib: the tree is tested without a window.
 
 - Each widget's id is its field's YAML path (`towns.layout.walls.height`, `biomes.rules[3].ground.color[1]`), so
   an event maps back to the field with no lookup table (`field_target`). The parts of one field add a suffix: the
@@ -41,8 +41,8 @@ from rayscreen import (
 )
 from rayscreen.specs import walk
 from worldgen.proc_gen.world.config import yaml_path
-from worldgen.utils.gen_ui.model.form import FieldSpec, Kind, SectionSpec, stepped
-from worldgen.utils.gen_ui.model.recipe import FieldPath, Recipe
+from worldgen.utils.world_gen_ui.model.form import FieldSpec, Kind, SectionSpec, stepped
+from worldgen.utils.world_gen_ui.model.recipe import FieldPath, Recipe
 
 TOWN_LAYOUT: FieldPath = ("towns", "layout")
 ON, HEADER, MINUS, PLUS, PICK = "on", "header", "minus", "plus", "pick"  # the parts of a field, as id suffixes

@@ -18,27 +18,27 @@ import pyray as rl
 import rayscreen
 from rayscreen import Column, Menu, MenuItem, ScreenManager, Theme, Window, mouse_free
 from worldgen.proc_gen.world.config import ConfigError
-from worldgen.utils.gen_ui.model.form import Kind, blank, box_kind, parse, recipe_form
-from worldgen.utils.gen_ui.model.log import Log, Source
-from worldgen.utils.gen_ui.model.plan_view import metres_per_pixel, to_world
-from worldgen.utils.gen_ui.model.readout import Readout
-from worldgen.utils.gen_ui.model.recipe import FieldPath, Recipe, renumbered
-from worldgen.utils.gen_ui.model.viewpoint import FOVY, Viewpoint
-from worldgen.utils.gen_ui.view.form import FormOptions
-from worldgen.utils.gen_ui.view.tips import facts_table
-from worldgen.utils.gen_ui.view.windows import LOG, OVERWRITE, log_window, show_log
+from worldgen.utils.world_gen_ui.model.form import Kind, blank, box_kind, parse, recipe_form
 from worldgen.utils.world_gen_ui.model.layers import LAYERS, has_layer, layers_for_stage, readout
+from worldgen.utils.world_gen_ui.model.log import Log, Source
+from worldgen.utils.world_gen_ui.model.plan_view import metres_per_pixel, to_world
+from worldgen.utils.world_gen_ui.model.readout import Readout
+from worldgen.utils.world_gen_ui.model.recipe import FieldPath, Recipe, renumbered
 from worldgen.utils.world_gen_ui.model.rules import RULES, can_move, can_remove, new_rule
 from worldgen.utils.world_gen_ui.model.saving import is_terrain, occupied, save_terrain
 from worldgen.utils.world_gen_ui.model.session import Session, StageState
 from worldgen.utils.world_gen_ui.model.sizes import size_notes
 from worldgen.utils.world_gen_ui.model.stages import STAGES, Status
 from worldgen.utils.world_gen_ui.model.terrain import Picture, picture
+from worldgen.utils.world_gen_ui.model.viewpoint import FOVY, Viewpoint
 from worldgen.utils.world_gen_ui.view import events as ev
 from worldgen.utils.world_gen_ui.view import windows
 from worldgen.utils.world_gen_ui.view.bars import Shown
+from worldgen.utils.world_gen_ui.view.form import FormOptions
 from worldgen.utils.world_gen_ui.view.map_render import MapRender
 from worldgen.utils.world_gen_ui.view.stages import recipe_tree, rule_cards
+from worldgen.utils.world_gen_ui.view.tips import facts_table
+from worldgen.utils.world_gen_ui.view.windows import LOG, OVERWRITE, log_window, show_log
 from worldgen.utils.world_gen_ui.view.world_screen import WorldScreen
 
 ImageKey = tuple[str, int]  # (layer, id of the progress it pictures)

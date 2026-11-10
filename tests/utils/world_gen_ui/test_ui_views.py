@@ -8,13 +8,13 @@ from rayscreen import Button, CheckBox, Dropdown, Event, Label, Picture, Rect, S
 from rayscreen.specs import check_unique_ids, walk
 from worldgen.config import DEFAULT_RECIPE
 from worldgen.proc_gen.world.config import yaml_path
-from worldgen.utils.gen_ui.model.form import Kind, recipe_form
-from worldgen.utils.gen_ui.model.recipe import Recipe
-from worldgen.utils.gen_ui.view.form import Target, field_target, parse_yaml_path
 from worldgen.utils.world_gen_ui.controller import Controller
+from worldgen.utils.world_gen_ui.model.form import Kind, recipe_form
+from worldgen.utils.world_gen_ui.model.recipe import Recipe
 from worldgen.utils.world_gen_ui.model.rules import RULES
 from worldgen.utils.world_gen_ui.model.stages import STAGES
 from worldgen.utils.world_gen_ui.view import events as ev
+from worldgen.utils.world_gen_ui.view.form import Target, field_target, parse_yaml_path
 from worldgen.utils.world_gen_ui.view.world_screen import WorldScreen
 
 LEAVES = (Label, Button, Toggle, CheckBox, TextBox, Dropdown, Picture, Swatch)

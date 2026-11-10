@@ -17,7 +17,7 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 from worldgen.proc_gen.world.config import TerrainConfig, WorldSection
-from worldgen.utils.gen_ui.model.recipe import FieldPath
+from worldgen.utils.world_gen_ui.model.recipe import FieldPath
 
 
 class Kind(Enum):

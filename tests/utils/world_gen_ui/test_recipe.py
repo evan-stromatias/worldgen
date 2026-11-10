@@ -7,8 +7,8 @@ import yaml
 
 from worldgen.config import DEFAULT_RECIPE, VERSION
 from worldgen.proc_gen.world.config import ConfigError, load_config
-from worldgen.utils.gen_ui.model.form import Kind, blank, box_kind, parse, recipe_form
-from worldgen.utils.gen_ui.model.recipe import HEADER, Recipe
+from worldgen.utils.world_gen_ui.model.form import Kind, blank, box_kind, parse, recipe_form
+from worldgen.utils.world_gen_ui.model.recipe import HEADER, Recipe
 
 
 @pytest.fixture

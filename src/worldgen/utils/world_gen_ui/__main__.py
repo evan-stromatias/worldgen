@@ -12,8 +12,8 @@ import sys
 from pathlib import Path
 
 from worldgen.proc_gen.world.config import ConfigError
-from worldgen.utils.gen_ui.model.log import Log, capture
-from worldgen.utils.gen_ui.model.recipe import Recipe
+from worldgen.utils.world_gen_ui.model.log import Log, capture
+from worldgen.utils.world_gen_ui.model.recipe import Recipe
 from worldgen.utils.world_gen_ui.view.events import RunAll
 
 
@@ -52,7 +52,7 @@ def main() -> None:
         if args.layer not in LAYERS:
             parser.error(f"--layer must be one of: {', '.join(LAYERS)}")
 
-    from worldgen.utils.gen_ui import app  # opens no window until asked
+    from worldgen.utils.world_gen_ui import app  # opens no window until asked
     from worldgen.utils.world_gen_ui.controller import Controller
 
     log = Log()

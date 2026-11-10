@@ -1,8 +1,8 @@
-"""Tooltips both generator UIs lay out the same way: facts as a table of muted names and right-aligned values,
-under a title. No raylib."""
+"""Tooltips lay out a readout's facts as a table of muted names and right-aligned values, under a title.
+No raylib."""
 
 from rayscreen import SMALL, TEXT, Column, Label, Node, Separator, Table, Tooltip
-from worldgen.utils.gen_ui.model.readout import Fact, Readout
+from worldgen.utils.world_gen_ui.model.readout import Fact, Readout
 
 
 def facts_table(prefix: str, facts: list[Fact]) -> Table:

@@ -7,8 +7,8 @@ from pydantic import Field
 
 from worldgen.config import DEFAULT_RECIPE
 from worldgen.proc_gen.world.config import Section, TerrainConfig
-from worldgen.utils.gen_ui.model.form import Bounds, Kind, SectionSpec, _section, recipe_form, stepped
-from worldgen.utils.gen_ui.model.recipe import Recipe
+from worldgen.utils.world_gen_ui.model.form import Bounds, Kind, SectionSpec, _section, recipe_form, stepped
+from worldgen.utils.world_gen_ui.model.recipe import Recipe
 from worldgen.utils.world_gen_ui.model.stages import STAGES
 
 

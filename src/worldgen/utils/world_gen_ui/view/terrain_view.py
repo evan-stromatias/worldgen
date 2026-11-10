@@ -11,8 +11,8 @@ import numpy as np
 import pyray as rl
 
 from rayscreen import Theme
-from worldgen.utils.gen_ui.model.viewpoint import FOVY, Viewpoint
 from worldgen.utils.world_gen_ui.model.terrain import Picture
+from worldgen.utils.world_gen_ui.model.viewpoint import FOVY, Viewpoint
 from worldgen.viewer.config import ViewerSettings
 from worldgen.viewer.render import NO_FOG, Renderer
 from worldgen.world.gpu import GpuPatch

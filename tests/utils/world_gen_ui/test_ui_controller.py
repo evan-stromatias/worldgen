@@ -18,12 +18,12 @@ from rayscreen.specs import walk
 from worldgen.config import DEFAULT_RECIPE
 from worldgen.proc_gen.world.__main__ import main as worldgen_main
 from worldgen.proc_gen.world.terrain_io import ARRAYS_FILE, PREVIEW_FILE, RECIPE_FILE, load_terrain
-from worldgen.utils.gen_ui.model.recipe import Recipe
-from worldgen.utils.gen_ui.view.windows import OVERWRITE
 from worldgen.utils.world_gen_ui.controller import Controller
+from worldgen.utils.world_gen_ui.model.recipe import Recipe
 from worldgen.utils.world_gen_ui.model.stages import Status
 from worldgen.utils.world_gen_ui.view import events as ev
 from worldgen.utils.world_gen_ui.view import windows
+from worldgen.utils.world_gen_ui.view.windows import OVERWRITE
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ or a town layout's shifted by the town's reach, so the town lies in [0, side].
 """
 
 from worldgen.geometry import XZ
-from worldgen.utils.gen_ui.model.viewpoint import Viewpoint
+from worldgen.utils.world_gen_ui.model.viewpoint import Viewpoint
 
 
 def metres_per_pixel(viewpoint: Viewpoint, width: float, height: float) -> float:

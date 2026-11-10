@@ -5,7 +5,7 @@ The text is ASCII: raylib's default font has no multiplication sign, approximate
 
 from typing import Any
 
-from worldgen.utils.gen_ui.model.recipe import FieldPath, Recipe
+from worldgen.utils.world_gen_ui.model.recipe import FieldPath, Recipe
 
 SIZE_CELLS = ("world", "size_cells")
 PATCH_CELLS = ("world", "patch_cells")

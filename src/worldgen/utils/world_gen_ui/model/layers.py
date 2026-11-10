@@ -12,7 +12,7 @@ from worldgen.proc_gen.world.config import TerrainConfig
 from worldgen.proc_gen.world.grid import to_cells
 from worldgen.proc_gen.world.pipeline import Progress, ground
 from worldgen.proc_gen.world.preview import DEEP, SHALLOW, hillshade, render, water_over
-from worldgen.utils.gen_ui.model.readout import Fact, Readout
+from worldgen.utils.world_gen_ui.model.readout import Fact, Readout
 
 # Layer -> the stage whose result it shows
 LAYERS = {

@@ -3,7 +3,7 @@
 import sys
 import threading
 
-from worldgen.utils.gen_ui.model.log import Log, Source, capture
+from worldgen.utils.world_gen_ui.model.log import Log, Source, capture
 
 
 def texts(log: Log) -> list[tuple[Source, str]]:

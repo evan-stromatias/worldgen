@@ -43,15 +43,13 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
 - `src/worldgen/viewer/`: the terrain renderer the UI's 3D view uses: `render.py` (terrain and water
   shaders, bundled in `viewer/shaders/`), `config.py` (`ViewerSettings`, `VIEWER_*` env), `camera.py`,
   `geometry.py` (camera maths, no window).
-- `src/worldgen/utils/gen_ui/`: what generator UIs share: the recipe forms built from the pydantic
-  classes (`model/form.py`, so a new recipe field shows up with no UI change), the draft recipe, the
-  log, the camera for 2D and 3D (`model/`, no raylib); the form, dialogs, log window and tooltips as
-  rayscreen specs (`view/`, no raylib); the window's loop (`app.py`).
 - `src/worldgen/utils/world_gen_ui/`: the generator with a UI (`worldgen-ui`). MVC: `model/` has no
-  raylib and is tested without a window (the session running the stages on a worker, the map's layers
-  and 3D terrain, the biome rules, the export); `view/` is rayscreen specs, only `map_render.py` and
-  `terrain_view.py` make GL calls; `controller.py` is the only code that changes the model. GL calls
-  stay on the main thread.
+  raylib and is tested without a window (the recipe forms built from the pydantic classes — `model/form.py`,
+  so a new recipe field shows up with no UI change — the draft recipe, the log, the camera for 2D and 3D,
+  the session running the stages on a worker, the map's layers and 3D terrain, the biome rules, the export);
+  `view/` is rayscreen specs (the form, dialogs, log window, tooltips, the world screen), only
+  `map_render.py` and `terrain_view.py` make GL calls; `controller.py` is the only code that changes the
+  model; `app.py` is the window's loop. GL calls stay on the main thread.
 - `assets/recipes/`: the default recipe the CLI falls back on.
 - `examples/`: recipes and `generate.py` (generate, export, load, show a patch).
 - `tests/`: pytest; `common.py` holds the small test recipe and the inline executor.

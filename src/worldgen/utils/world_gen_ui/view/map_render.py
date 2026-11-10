@@ -14,9 +14,9 @@ import math
 import pyray as rl
 
 from rayscreen import SMALL, TEXT, Theme
-from worldgen.utils.gen_ui.model.plan_view import metres_per_pixel
-from worldgen.utils.gen_ui.model.viewpoint import Viewpoint
+from worldgen.utils.world_gen_ui.model.plan_view import metres_per_pixel
 from worldgen.utils.world_gen_ui.model.terrain import Picture
+from worldgen.utils.world_gen_ui.model.viewpoint import Viewpoint
 from worldgen.utils.world_gen_ui.view.terrain_view import TerrainView
 from worldgen.world.gpu import GpuTexture
 

@@ -1,18 +1,17 @@
 """What the user did, in the tool's terms: what the controller acts on. `translate` makes them from the events
-rayscreen returns, which carry widget ids (a form's are YAML paths, `gen_ui.view.form`). No raylib."""
+rayscreen returns, which carry widget ids (a form's are YAML paths, `view/form.py`). No raylib."""
 
 from dataclasses import dataclass
 from typing import Any
 
 import rayscreen
-from worldgen.utils.gen_ui.model.form import Kind, SectionSpec, stepped
-from worldgen.utils.gen_ui.model.recipe import FieldPath, Recipe
-from worldgen.utils.gen_ui.view import form as form_ids
-from worldgen.utils.gen_ui.view import windows as shared
-from worldgen.utils.gen_ui.view.form import field_target
+from worldgen.utils.world_gen_ui.model.form import Kind, SectionSpec, stepped
 from worldgen.utils.world_gen_ui.model.layers import LAYERS
+from worldgen.utils.world_gen_ui.model.recipe import FieldPath, Recipe
 from worldgen.utils.world_gen_ui.model.rules import RULES
+from worldgen.utils.world_gen_ui.view import form as form_ids
 from worldgen.utils.world_gen_ui.view import windows
+from worldgen.utils.world_gen_ui.view.form import field_target
 
 
 @dataclass(frozen=True, slots=True)
@@ -202,10 +201,10 @@ MAP_MENU = "map-menu"
 SIMPLE: dict[str, Event] = {
     "run-all": RunAll(), "stop-all": StopAll(), "theme": ThemeSwitched(), "log": ToggleLog(),
     "log.copy": CopyLog(), "log.clear": ClearLog(), f"{windows.OPEN}.ok": OpenRecipe(), f"{windows.SAVE_AS}.ok": SaveRecipeAs(),
-    f"{windows.SAVE_WORLD}.ok": SaveWorld(), f"{shared.OVERWRITE}.ok": Overwrite(),
+    f"{windows.SAVE_WORLD}.ok": SaveWorld(), f"{windows.OVERWRITE}.ok": Overwrite(),
     "open": DialogAsked(windows.OPEN), "save-as": DialogAsked(windows.SAVE_AS), "save-world": DialogAsked(windows.SAVE_WORLD),
 }
-DIALOGS = (windows.OPEN, windows.SAVE_AS, windows.SAVE_WORLD, shared.OVERWRITE, shared.LOG)
+DIALOGS = (windows.OPEN, windows.SAVE_AS, windows.SAVE_WORLD, windows.OVERWRITE, windows.LOG)
 
 
 def translate(events: list[rayscreen.Event], form: SectionSpec, recipe: Recipe) -> list[Event]:
