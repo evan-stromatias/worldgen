@@ -32,11 +32,13 @@ module-name = "worldgen"
 [dependency-groups]
 dev = [
     "pytest>=9.0",
+    "pytest-cov>=7.0.0",
     "ruff>=0.14",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--cov=worldgen --cov-report=term-missing"
 
 [tool.ruff]
 line-length = 140
