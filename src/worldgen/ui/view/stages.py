@@ -20,7 +20,7 @@ from worldgen.ui.view.form import (
     REMOVE,
     UP,
     FormOptions,
-    about,
+    field_tip,
     form_tree,
     header_button,
     indented,
@@ -62,7 +62,8 @@ def _block(section: SectionSpec, options: FormOptions, statuses: StageTexts, run
     path: FieldPath = (key,)
     opened = options.opened is not None and options.opened(path, False)
     staged = key in STAGES
-    header: list[Node] = [header_button(key, f"{STAGES.index(key) + 1} {section.title}" if staged else section.title, opened)]
+    title = f"{STAGES.index(key) + 1} {section.title}" if staged else section.title
+    header: list[Node] = [header_button(key, title, opened, section.description)]
     if not opened and problems_below(recipe, path):
         header.append(Label(f"{key}.flag", "has problems", size=SMALL, tone="error"))
     if staged:
@@ -87,9 +88,7 @@ def rule_cards(spec: FieldSpec, path: FieldPath, options: FormOptions) -> list[N
     widget_id, recipe = yaml_path(path), options.recipe
     rules = recipe.get(path)
     rules = rules if isinstance(rules, list) else []
-    nodes: list[Node] = [Label(f"{widget_id}.label", f"Rules ({len(rules)})")]
-    if options.descriptions and spec.description:
-        nodes.append(about(widget_id, spec.description))
+    nodes: list[Node] = [Label(f"{widget_id}.label", f"Rules ({len(rules)})", tooltip=field_tip(widget_id, "Rules", spec))]
     nodes += problems(widget_id, recipe.problems_at(path))
     for i, rule in enumerate(rules):
         rule = rule if isinstance(rule, dict) else {}

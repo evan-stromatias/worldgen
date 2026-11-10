@@ -66,7 +66,6 @@ class Controller:
         self.pending_layer: str | None = None  # a layer to show once nothing is running (the UI's --layer)
         self.three_d = False
         self.exaggeration = 1.0
-        self.descriptions = True
         self.toggled: set[FieldPath] = set()  # sections and rules opened or closed by hand
         self.viewpoint = Viewpoint()  # kept across pictures while the world's size stays the same
         self.map = MapRender()  # no GL until it draws
@@ -274,7 +273,7 @@ class Controller:
         shown.seed = str(self.session.seed)
         shown.runnable, shown.stoppable = self.runnable, self.session.busy and not self.session.stopping
         shown.savable = self.savable
-        shown.descriptions, shown.dark = self.descriptions, self.theme.dark
+        shown.dark = self.theme.dark
         shown.recipe_path, shown.world_path = self.recipe_path, self.world_path
         shown.layers, shown.layer = self.layers(), self.layer
         shown.three_d, shown.exaggeration = self.three_d, self.exaggeration
@@ -312,7 +311,7 @@ class Controller:
     def _form_options(self) -> FormOptions:
         rules = self.recipe.get(RULES)
         ids = tuple(str(rule.get("id", "")) for rule in rules if isinstance(rule, dict)) if isinstance(rules, list) else ()
-        return FormOptions(self.recipe, self.descriptions, notes=size_notes(self.recipe), choices=ids,
+        return FormOptions(self.recipe, notes=size_notes(self.recipe), choices=ids,
                            opened=lambda path, start_open: (path in self.toggled) != start_open, rules=rule_cards)
 
     def _map_point(self, x: float, y: float) -> tuple[float, float] | None:
@@ -388,8 +387,6 @@ class Controller:
                 self.exaggeration = factor
             case ev.SectionToggled(path):
                 self.toggled ^= {path}
-            case ev.DescriptionsShown(on):
-                self.descriptions = on
             case ev.ThemeSwitched():
                 self.theme.set_dark(not self.theme.dark)
             case ev.RecipePathTyped(text):

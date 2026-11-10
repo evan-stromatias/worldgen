@@ -138,11 +138,6 @@ class SectionToggled:
 
 
 @dataclass(frozen=True, slots=True)
-class DescriptionsShown:
-    on: bool
-
-
-@dataclass(frozen=True, slots=True)
 class ViewChosen:
     """2D or 3D."""
 
@@ -192,7 +187,7 @@ Event = (
     TextCommitted | ValueChosen | OptionalToggled | SeedCommitted | RunStage | ResetStage | RunAll | StopAll
     | WorldPathTyped | SaveWorld | RecipePathTyped | OpenRecipe | SaveRecipeAs
     | LayerChosen | AddRule | RemoveRule | MoveRule
-    | ClearLog | CopyLog | ToggleLog | SectionToggled | DescriptionsShown | ViewChosen | ExaggerationChosen | ThemeSwitched
+    | ClearLog | CopyLog | ToggleLog | SectionToggled | ViewChosen | ExaggerationChosen | ThemeSwitched
     | DialogAsked | DialogClosed | Overwrite | MenuChosen
 )
 
@@ -245,8 +240,6 @@ def _translated(event: rayscreen.Event, form: SectionSpec, recipe: Recipe) -> Ev
             return ViewChosen(widget == "3d")
         case "height":  # "x2"
             return ExaggerationChosen(float(str(value).removeprefix("x")))
-        case "descriptions":
-            return DescriptionsShown(bool(value))
         case windows.OPEN_PATH | windows.SAVE_AS_PATH:
             return RecipePathTyped(str(value))
         case windows.SAVE_WORLD_PATH:

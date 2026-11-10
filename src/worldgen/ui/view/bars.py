@@ -11,7 +11,6 @@ from rayscreen import (
     SMALL,
     SUN,
     Button,
-    CheckBox,
     Column,
     Dropdown,
     Fill,
@@ -62,7 +61,6 @@ class Shown:
     runnable: bool = False  # stages may run now
     stoppable: bool = False  # a run is going on that may be stopped
     savable: bool = False  # a terrain may be exported now
-    descriptions: bool = True
     dark: bool = True
     recipe_path: str = ""
     world_path: str = ""
@@ -100,13 +98,12 @@ def map_bar(shown: Shown) -> Row:
 
 
 def seed_bar(shown: Shown) -> Row:
-    """The seed, running every stage or stopping the run, the descriptions, and at the top right light or dark."""
+    """The seed, running every stage or stopping the run, and at the top right light or dark."""
     return Row(children=[
         Label("seed.label", "Seed"),
         TextBox("seed", shown.seed, weight=1),
         Button("run-all", "#131#Run all", enabled=shown.runnable),
         Button("stop-all", "#133#Stop all", enabled=shown.stoppable),
-        CheckBox("descriptions", "descriptions", shown.descriptions),
         theme_button(shown.dark),
     ])
 
@@ -179,8 +176,6 @@ def refresh(nodes: dict[str, Node], shown: Shown) -> None:
     for node_id, enabled in (("run-all", shown.runnable), ("stop-all", shown.stoppable), ("save-world", shown.savable)):
         if isinstance(button := nodes.get(node_id), Button):
             button.enabled = enabled
-    if isinstance(descriptions := nodes.get("descriptions"), CheckBox):
-        descriptions.checked = shown.descriptions
     if isinstance(theme := nodes.get("theme"), Button):
         theme.text = theme_text(shown.dark)
     for node_id, text in (("recipe-path", _recipe_path(shown.recipe_path)), ("world-path", shown.world_path)):

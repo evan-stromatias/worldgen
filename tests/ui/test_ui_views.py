@@ -174,11 +174,17 @@ def test_opening_a_section_keeps_the_box_being_edited_and_the_scroll(controller)
     assert any(getattr(node, "id", "").startswith("climate.") and isinstance(node, TextBox) for node in walk(screen.root))
 
 
-def test_descriptions_hidden_become_the_names_tooltips(controller):
+def test_a_fields_help_is_its_names_tooltip(controller):
     controller.act(ev.SectionToggled(("world",)))
-    controller.act(ev.DescriptionsShown(False))
     controller.show()
     name = controller.screen.find("world.cell_size.label")
-    assert controller.screen.find("world.cell_size.about") is None
+    assert controller.screen.find("world.cell_size.about") is None  # help takes no room on the form
     texts = [node.text for node in walk(name.tooltip.root) if isinstance(node, Label)]
-    assert texts[0] == "Cell size" and "above 0" in texts
+    assert texts[0] == "Cell size" and "above 0" in texts  # the description, and the bounds
+    assert any("bigger world" in text for text in texts)  # what turning it up does
+
+
+def test_a_sections_help_is_its_headers_tooltip(controller):
+    header = controller.screen.find("world.header")
+    texts = [node.text for node in walk(header.tooltip.root) if isinstance(node, Label)]
+    assert "Size and layout of the world grid." in texts

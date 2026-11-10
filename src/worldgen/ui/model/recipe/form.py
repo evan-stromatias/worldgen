@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
 from worldgen.generator.config import TerrainConfig, WorldSection
+from worldgen.ui.model.recipe.impact import impact_of
 from worldgen.ui.model.recipe.recipe import FieldPath
 
 
@@ -56,6 +57,7 @@ class FieldSpec:
     key: str
     kind: Kind
     description: str
+    impact: str = ""  # ballpark: what turning the value up or down does
     bounds: Bounds = Bounds()
     choices: tuple[str, ...] = ()
     optional: bool = False  # may be left out (None): a check box turns it on and off
@@ -212,7 +214,7 @@ def _field(owner: type[BaseModel], key: str, info: FieldInfo) -> "FieldSpec | Se
 
     def spec(kind: Kind, **more) -> FieldSpec:
         more.setdefault("bounds", _bounds(metadata))
-        return FieldSpec(key, kind, info.description or "", optional=optional, **more)
+        return FieldSpec(key, kind, info.description or "", impact=impact_of(owner, key), optional=optional, **more)
 
     scalar = _scalar_kind(annotation)
     if scalar is not None:

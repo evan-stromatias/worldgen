@@ -208,7 +208,8 @@ One package, `worldgen`, under `src/`:
   variables), `camera.py` (the free-flying camera), `geometry.py` (camera maths, no window).
 - `worldgen/ui/` — the generator with a UI (`worldgen-ui`), as MVC. `model/` has no raylib and is tested
   without a window: `model/recipe/` is the draft recipe being edited (the forms built from the pydantic
-  classes, so a new recipe field shows up with no UI change; the biome rules; the size notes), `model/`
+  classes, so a new recipe field shows up with no UI change; the biome rules; the size notes; the
+  tooltips' per-field tuning hints), `model/`
   the log, the session running the stages on a worker and the export, `model/map/` where the map looks,
   its layers and its 3D terrain. `view/` is rayscreen specs (the form, bars, dialogs, log window,
   tooltips, the world screen) — only `view/gl/` makes GL calls, rendering the map into a texture.
