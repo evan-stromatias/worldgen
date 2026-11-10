@@ -3,15 +3,19 @@
 One file holds every generation parameter and the biome rules for stages 1-5 (elevation, erosion,
 hydrology, climate, biomes). The seed is not in it: it comes from the command line, so one recipe can
 make many terrains.
+
+The `version` key records the worldgen package version that wrote the file (semantic versioning,
+stamped on export). worldgen never checks it: whether a file from another version still works is the
+client's call. When reading fails here, the error names the version in the file.
 """
 
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
 
 import yaml
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, ValidationError, model_validator
 
-FORMAT_VERSION = 1
+from worldgen.config import VERSION
 
 
 class ConfigError(ValueError):
@@ -361,7 +365,10 @@ class BiomesSection(Section):
 class TerrainConfig(Section):
     """A whole terrain.yaml: the world grid and the stages 1-5 (elevation, erosion, hydrology, climate, biomes)."""
 
-    version: int = Field(default=FORMAT_VERSION, description="Recipe format; this generator reads only its own.")
+    version: Annotated[str, BeforeValidator(str)] = Field(
+        default=VERSION,
+        description="The worldgen version that wrote the file, stamped on export; never checked on load.",
+    )
     world: WorldSection = Field(default_factory=WorldSection)
     elevation: ElevationSection = Field(default_factory=ElevationSection)
     erosion: ErosionSection = Field(default_factory=ErosionSection)
@@ -375,12 +382,6 @@ class TerrainConfig(Section):
         if isinstance(data, dict) and "seed" in data:
             raise ValueError("`seed` does not belong in the file; pass it with --seed")
         return data
-
-    @model_validator(mode="after")
-    def _supported_version(self) -> Self:
-        if self.version != FORMAT_VERSION:
-            raise ValueError(f"version {self.version} is not supported (this generator reads version {FORMAT_VERSION})")
-        return self
 
     @model_validator(mode="after")
     def _sea_floor_below_sea(self) -> Self:
@@ -411,14 +412,16 @@ def config_errors(error: ValidationError) -> list[tuple[str, str]]:
 
 
 def parse_config(data: Any, source: str = "terrain.yaml") -> TerrainConfig:
-    """Validate already-parsed YAML; raise ConfigError listing every problem."""
+    """Validate already-parsed YAML; raise ConfigError listing every problem, naming the file's `version`
+    so a file another worldgen wrote says which."""
     if not isinstance(data, dict):
         raise ConfigError(f"{source}: expected a mapping of sections at the top level")
     try:
         return TerrainConfig.model_validate(data)
     except ValidationError as e:
+        written = f" (written by worldgen {data['version']})" if "version" in data else ""
         lines = [f"  {path}: {message}" if path else f"  {message}" for path, message in config_errors(e)]
-        raise ConfigError(f"{source} is invalid:\n" + "\n".join(lines)) from None
+        raise ConfigError(f"{source}{written} is invalid:\n" + "\n".join(lines)) from None
 
 
 def load_config(path: Path) -> TerrainConfig:

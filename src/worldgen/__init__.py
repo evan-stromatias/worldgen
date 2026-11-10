@@ -10,9 +10,12 @@ from a YAML recipe and a seed.
 Also `worldgen` (the CLI) and `worldgen-ui` (the generator with a UI).
 """
 
+from worldgen.config import VERSION
 from worldgen.proc_gen.world.config import TerrainConfig
 from worldgen.proc_gen.world.patches import Patch
 from worldgen.proc_gen.world.terrain import TerrainData
 from worldgen.proc_gen.world.terrain_io import export_terrain, generate_terrain, load_terrain
 
-__all__ = ["Patch", "TerrainConfig", "TerrainData", "export_terrain", "generate_terrain", "load_terrain"]
+__version__ = VERSION
+
+__all__ = ["Patch", "TerrainConfig", "TerrainData", "VERSION", "export_terrain", "generate_terrain", "load_terrain"]

@@ -1,7 +1,7 @@
-# Highlands: a 4 km continent of mountain ranges, terraced in part, weathered by erosion
-# (docs/plans/001-phase-2/024-dramatic-terrain-TODO.md). Keys left out take their defaults.
+# Highlands: a 4 km continent of mountain ranges, terraced in part, weathered by erosion.
+# Keys left out take their defaults.
 
-version: 1
+version: 0.1.0
 world:
   cell_size: 1.0
   size_cells: 4096

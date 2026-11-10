@@ -86,7 +86,7 @@ Either way the result is a self-contained **terrain bundle**:
 
 ```
 out/island/
-  terrain.yaml   # the recipe and the seed
+  terrain.yaml   # the recipe, the seed, and the worldgen version that wrote it
   terrain.npz    # the arrays, compressed deterministically
   preview.png    # shaded biome & water preview
 ```
@@ -182,7 +182,7 @@ key at its default, commented:
 
 ```yaml
 # A terrain recipe, every key at its default. Leave a key out and it takes the value shown here.
-version: 1              # recipe format; this generator reads only its own
+version: 0.1.0          # the worldgen that wrote the file (semantic versioning), stamped on export; never checked on load
 world:
   cell_size: 1.0        # metres per cell
   patch_cells: 128      # cells per patch side, when the terrain is read in patches
@@ -310,6 +310,10 @@ biomes:
 
 See `examples/` for recipes that change a little, and `worldgen.proc_gen.world.config` for the prose
 documentation of every field.
+
+`version` records the worldgen version that wrote the file, stamped on every export. worldgen never
+checks it: whether a bundle written by another version still works for you is your call as the client.
+But when reading a bundle does fail, the error names the version in its file.
 
 ## Tests
 

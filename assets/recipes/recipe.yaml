@@ -1,6 +1,6 @@
-# World recipe, saved by r-worldgen-ui. Keys left out take their defaults.
+# Terrain recipe, saved by worldgen-ui. Keys left out take their defaults.
 
-version: 1
+version: 0.1.0
 world:
   cell_size: 1.0
   size_cells: 1024

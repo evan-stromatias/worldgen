@@ -13,6 +13,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
+from worldgen.config import VERSION
 from worldgen.proc_gen.world.config import ConfigError, TerrainConfig, config_errors, yaml_path
 
 FieldPath = tuple[str | int, ...]  # a place in the recipe: ("elevation", "noise", "octaves"), ("biomes", "rules", 3, "id")
@@ -57,8 +58,10 @@ class Recipe:
         return cls(None, copy.deepcopy(defaults()))
 
     def text(self) -> str:
-        """The draft as a recipe file: YAML, leaving out what is unset."""
-        return HEADER + yaml.dump(_without_none(self.data), Dumper=_Dumper, sort_keys=False, allow_unicode=True, width=110)
+        """The draft as a recipe file: YAML, leaving out what is unset. `version` is this worldgen's,
+        whatever the file the recipe was read from said."""
+        data = {**_without_none(self.data), "version": VERSION}
+        return HEADER + yaml.dump(data, Dumper=_Dumper, sort_keys=False, allow_unicode=True, width=110)
 
     def save(self, path: Path) -> None:
         """Write the draft as a recipe file; from now on the recipe is that file."""

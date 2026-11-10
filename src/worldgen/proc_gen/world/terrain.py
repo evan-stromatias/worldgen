@@ -6,6 +6,7 @@ Vertex grids have (size_cells + 1)² samples; cell grids have size_cells². `slo
 """
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy as np
 
@@ -88,7 +89,7 @@ class TerrainData:
         return self.patches_per_side, self.patches_per_side
 
     @classmethod
-    def load(cls, directory) -> "TerrainData":
+    def load(cls, directory: Path | str) -> "TerrainData":
         """Read a terrain bundle (a directory written by `export_terrain` or the UI's Export world)."""
         from worldgen.proc_gen.world.terrain_io import load_terrain
 

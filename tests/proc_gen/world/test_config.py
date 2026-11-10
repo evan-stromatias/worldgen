@@ -63,9 +63,19 @@ def test_sea_floor_below_sea_level(small_data):
     assert "must be below world.sea_level" in errors_for(small_data)
 
 
-def test_unsupported_version(small_data):
-    small_data["version"] = 99
-    assert "version 99 is not supported" in errors_for(small_data)
+def test_the_version_is_never_checked(small_data):
+    """Compatibility is the client's call: a recipe from another worldgen version still validates."""
+    small_data["version"] = "99.0.0"
+    assert parse_config(small_data).version == "99.0.0"
+    small_data["version"] = 1  # an old int version coerces
+    assert parse_config(small_data).version == "1"
+
+
+def test_an_invalid_recipe_names_the_files_version(small_data):
+    small_data["version"] = "0.0.1"
+    small_data["world"]["size_cells"] = -5
+    message = errors_for(small_data)
+    assert "written by worldgen 0.0.1" in message and "world.size_cells" in message
 
 
 def test_bad_range_names_rule(small_data):

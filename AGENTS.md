@@ -68,8 +68,10 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
   - New random choices get a new stream, or go after existing draws, so old outputs do not change.
   - A refactor of generation code keeps outputs byte-identical: do not reorder draws, change float
     evaluation order (`a + (b - a) * i / n` rewritten can change the last bit) or swap numpy and Python math.
-- **File formats** are versioned (the recipe's `version`). Bump the version when a reader must change.
-  Readers accept only the current version: terrains are cheap to regenerate.
+- **File formats.** Every terrain.yaml carries `version`: the worldgen package's semantic version,
+  stamped on export (`worldgen.config.VERSION`, from the installed package metadata). worldgen never
+  checks it — whether another version's file still works is the client's call — but when reading a
+  bundle fails, the error names the version in the file.
 - **raylib.**
   - GL calls only on the main thread; meshes are built as numpy arrays on workers (`worldgen.world.mesh`)
     and uploaded on the main thread (`worldgen.world.gpu`).

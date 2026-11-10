@@ -1,7 +1,7 @@
 # The default terrain recipe: one island, 1 km square at 1 m cells. Keys left out take their defaults;
 # worldgen.proc_gen.world.config has every key and its description.
 
-version: 1
+version: 0.1.0
 world:
   cell_size: 1.0
   patch_cells: 128

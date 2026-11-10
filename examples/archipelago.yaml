@@ -1,7 +1,7 @@
 # An archipelago: several islands. Keys left out take their defaults (worldgen.proc_gen.world.config
 # documents them all).
 
-version: 1
+version: 0.1.0
 world:
   cell_size: 1.0
   size_cells: 1024

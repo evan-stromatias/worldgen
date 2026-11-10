@@ -2,7 +2,9 @@
 
 import numpy as np
 import pytest
+import yaml
 
+from worldgen.config import VERSION
 from worldgen.proc_gen.world import preview
 from worldgen.proc_gen.world.config import ConfigError, load_config
 from worldgen.proc_gen.world.terrain_io import ARRAYS, export_terrain, generate_terrain, load_terrain
@@ -59,6 +61,36 @@ def test_load_terrain_wants_a_bundle(small_terrain, tmp_path):
     (recipe_only / "terrain.yaml").write_text("world: {size_cells: 128}\n")  # no seed
     with pytest.raises(ConfigError, match="no `seed`"):
         load_terrain(recipe_only)
+
+
+def test_export_stamps_the_package_version(small_terrain, tmp_path):
+    out = tmp_path / "terrain"
+    export_terrain(small_terrain, out)
+    data = yaml.safe_load((out / "terrain.yaml").read_text())
+    assert data["version"] == VERSION
+
+
+def test_a_bundle_from_another_version_still_loads(small_terrain, tmp_path):
+    """Compatibility is the client's call: worldgen never checks the bundle's version."""
+    out = tmp_path / "terrain"
+    export_terrain(small_terrain, out)
+    path = out / "terrain.yaml"
+    data = yaml.safe_load(path.read_text())
+    data["version"] = "99.0.0"
+    path.write_text(yaml.dump(data))
+    assert load_terrain(out).config.version == "99.0.0"
+
+
+def test_a_broken_bundle_names_the_version_in_its_error(small_terrain, tmp_path):
+    out = tmp_path / "terrain"
+    export_terrain(small_terrain, out)
+    path = out / "terrain.yaml"
+    data = yaml.safe_load(path.read_text())
+    data["version"] = "0.0.1"
+    path.write_text(yaml.dump(data))
+    (out / "terrain.npz").unlink()
+    with pytest.raises(ConfigError, match=r"worldgen 0\.0\.1"):
+        load_terrain(out)
 
 
 def test_generate_terrain_matches_the_bundle(small_config, small_terrain, tmp_path):

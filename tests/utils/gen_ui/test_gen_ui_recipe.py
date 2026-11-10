@@ -5,7 +5,7 @@ import copy
 import pytest
 import yaml
 
-from worldgen.config import DEFAULT_RECIPE
+from worldgen.config import DEFAULT_RECIPE, VERSION
 from worldgen.proc_gen.world.config import ConfigError, load_config
 from worldgen.utils.gen_ui.model.form import Kind, blank, box_kind, parse, recipe_form
 from worldgen.utils.gen_ui.model.recipe import HEADER, Recipe
@@ -18,6 +18,12 @@ def recipe() -> Recipe:
 
 def test_the_default_recipe_is_valid_and_complete(recipe):
     assert recipe.valid and recipe.problems == {}
+
+
+def test_the_saved_text_stamps_the_package_version(recipe):
+    """Whatever version the file read in said, a save writes this worldgen's."""
+    recipe.set(("version",), "9.9.9")
+    assert yaml.safe_load(recipe.text())["version"] == VERSION
 
 
 @pytest.mark.parametrize(
