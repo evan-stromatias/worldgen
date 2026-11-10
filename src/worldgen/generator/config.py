@@ -392,11 +392,6 @@ class TerrainConfig(Section):
             )
         return self
 
-    @classmethod
-    def from_yaml(cls, path: Path) -> "TerrainConfig":
-        """Read and validate a terrain recipe."""
-        return load_config(path)
-
 
 def yaml_path(loc: tuple) -> str:
     """A place in a recipe as messages name it: ("biomes", "rules", 2, "when") is biomes.rules[2].when."""

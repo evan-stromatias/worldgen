@@ -83,7 +83,6 @@ class Controller:
         self._wanted: ImageKey | None = None  # the image the map should show
         self._drawing: tuple[ImageKey, Future] | None = None
         self._on_map: ImageKey | None = None  # the image the map shows
-        self._on_map_picture: Picture | None = None
         self._drag: tuple[int, tuple[float, float]] | None = None  # the button held on the map, and where the mouse was
         self._log_seen = 0  # the log's `added` when it was last seen
         self._form_dirty = False
@@ -165,7 +164,7 @@ class Controller:
         """Hand a finished picture to the map (GL: main thread only)."""
         if self._wanted is None and self._on_map is not None:
             self.map.set_picture(None)
-            self._on_map, self._on_map_picture = None, None
+            self._on_map = None
         if self._drawing is None or not self._drawing[1].done():
             return
         key, job = self._drawing
@@ -180,7 +179,7 @@ class Controller:
         world = self._layer_state(key[0]).config.world
         self.viewpoint.fit(world.size_cells * world.cell_size)  # kept while the world's size stays the same
         self.map.set_picture(drawn, world.sea_level)
-        self._on_map, self._on_map_picture = key, drawn
+        self._on_map = key
 
     def _navigate(self) -> None:
         """Pan, zoom, turn and tilt while the mouse belongs to the map (not a widget, a window or a menu)."""

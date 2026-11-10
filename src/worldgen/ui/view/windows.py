@@ -18,7 +18,6 @@ from rayscreen import (
     Node,
     Row,
     Scroll,
-    TextBox,
     Tone,
     Tooltip,
     Window,
@@ -36,14 +35,6 @@ BOTTOM = -1e9  # a scroll offset past any content: raygui clamps it to the botto
 def buttons(window_id: str, ok: str) -> Row:
     """Cancel and the dialog's own answer, at the right."""
     return Row(children=[Fill(), Button(f"{window_id}.cancel", "Cancel"), Button(f"{window_id}.ok", ok)])
-
-
-def path_window(window_id: str, title: str, prompt: str, path: str, ok: str, extra: list[Node] | None = None) -> Window:
-    """A modal window asking for a path, with anything `extra` between the path and the buttons."""
-    children: list[Node] = [Label(f"{window_id}.prompt", prompt, size=SMALL, wrap=True, tone="muted"), TextBox(f"{window_id}.path", path)]
-    children += extra or []
-    children.append(buttons(window_id, ok))
-    return Window(window_id, title, Column(children=children))
 
 
 def question_window(window_id: str, title: str, text: str, ok: str) -> Window:

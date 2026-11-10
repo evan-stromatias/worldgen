@@ -1,8 +1,8 @@
-"""Tooltips lay out a readout's facts as a table of muted names and right-aligned values, under a title.
+"""A readout's facts laid out as a table of muted names and right-aligned values, for tooltips and menus.
 No raylib."""
 
-from rayscreen import SMALL, TEXT, Column, Label, Node, Separator, Table, Tooltip
-from worldgen.ui.model.map.readout import Fact, Readout
+from rayscreen import SMALL, Label, Table
+from worldgen.ui.model.map.readout import Fact
 
 
 def facts_table(prefix: str, facts: list[Fact]) -> Table:
@@ -12,14 +12,3 @@ def facts_table(prefix: str, facts: list[Fact]) -> Table:
     return Table([[Label(f"{prefix}.{i}.name", name, height=SMALL + 4, size=SMALL, tone="muted"),
                    Label(f"{prefix}.{i}.value", value, height=SMALL + 4, size=SMALL)]
                   for i, (name, value) in enumerate(facts)], align=("left", "right"))
-
-
-def readout_tooltip(found: Readout, footer: str | None = None) -> Tooltip:
-    """What lies under the mouse: its title, then its facts as a table, then `footer` (what more there is to do
-    there: "right-click: Details... for more")."""
-    children: list[Node] = [Label("tip.title", found.title, height=TEXT + 4)]
-    if found.facts:
-        children += [Separator(), facts_table("tip", found.facts)]
-        if footer:
-            children += [Separator(), Label("tip.more", footer, height=SMALL + 4, size=SMALL, tone="muted")]
-    return Tooltip(found.key, Column(children=children, gap=2))

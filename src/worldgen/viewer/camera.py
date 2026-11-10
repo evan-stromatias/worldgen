@@ -60,10 +60,6 @@ class FlyCamera:
             (self.position.copy(), self.yaw, self.pitch), (np.asarray(position, float), yaw, pitch), duration
         )
 
-    def face(self, yaw: float, duration: float) -> None:
-        """Turn to a heading in place, keeping the pitch."""
-        self.glide_to(self.position, yaw, self.pitch, duration)
-
     def update(self, dt: float, controls: FlyInput, ground_at: Callable[[float, float], float]) -> None:
         if self.glide is not None:
             moving = any(controls.move) or controls.look != (0.0, 0.0)
@@ -87,12 +83,6 @@ class FlyCamera:
     def turn(self, look: tuple[float, float]) -> None:
         self.yaw = (self.yaw + look[0] * self.sensitivity) % (2 * math.pi)
         self.pitch = min(max(self.pitch - look[1] * self.sensitivity, -MAX_PITCH), MAX_PITCH)
-
-    def place(self, eye: tuple[float, float, float], ground: float) -> None:
-        """Put the camera at an eye position (walking), skipping flight and its ground margin."""
-        self.glide = None
-        self.position = np.array(eye, float)
-        self._ground = ground
 
     def _advance_glide(self, dt: float) -> None:
         g = self.glide
