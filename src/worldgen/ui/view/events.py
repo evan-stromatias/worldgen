@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import rayscreen
+from worldgen.generator.terrain_io import ExportFormat
 from worldgen.ui.model.map.layers import LAYERS
 from worldgen.ui.model.recipe.form import Kind, SectionSpec, stepped
 from worldgen.ui.model.recipe.recipe import FieldPath, Recipe
@@ -75,6 +76,13 @@ class WorldPathTyped:
 @dataclass(frozen=True, slots=True)
 class SaveWorld:
     pass
+
+
+@dataclass(frozen=True, slots=True)
+class FormatChosen:
+    """Export world's format: npz for Python, raw for other languages."""
+
+    format: ExportFormat
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,7 +193,7 @@ class MenuChosen:
 
 Event = (
     TextCommitted | ValueChosen | OptionalToggled | SeedCommitted | RunStage | ResetStage | RunAll | StopAll
-    | WorldPathTyped | SaveWorld | RecipePathTyped | OpenRecipe | SaveRecipeAs
+    | WorldPathTyped | SaveWorld | FormatChosen | RecipePathTyped | OpenRecipe | SaveRecipeAs
     | LayerChosen | AddRule | RemoveRule | MoveRule
     | ClearLog | CopyLog | ToggleLog | SectionToggled | ViewChosen | ExaggerationChosen | ThemeSwitched
     | DialogAsked | DialogClosed | Overwrite | MenuChosen
@@ -244,6 +252,9 @@ def _translated(event: rayscreen.Event, form: SectionSpec, recipe: Recipe) -> Ev
             return RecipePathTyped(str(value))
         case windows.SAVE_WORLD_PATH:
             return WorldPathTyped(str(value))
+        case windows.SAVE_WORLD_FORMAT:
+            chosen = [format for format, text in windows.FORMAT_CHOICES.items() if text == value]
+            return FormatChosen(chosen[0]) if chosen else None
     if widget == MAP_MENU:
         return MenuChosen(str(value), event.target) if value is not None and isinstance(event.target, tuple) else None
     window, _, part = widget.rpartition(".")

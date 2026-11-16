@@ -11,6 +11,10 @@ One package, `worldgen`, built with uv. Run everything from the repository root.
 Never run a git operation without asking the user first: not only commits and pushes, but stash, checkout,
 restore, reset, apply, merge and the like. Read-only git (`status`, `diff`, `log`, `show`) is fine.
 
+Never edit `CHANGELOG.md` or the package's version (`version` in `pyproject.toml`, and `uv.lock`'s
+entry for worldgen): CI/CD writes both on release. Describe a change in its commit message or PR
+instead.
+
 ## Commands
 
 ```sh
@@ -19,13 +23,14 @@ uv run pytest -q                                               # tests (no windo
 uv run ruff check src                                          # lint
 uv run worldgen --seed 7                                       # generate the default terrain, into out/seed-7
 uv run worldgen --config examples/archipelago.yaml --seed 7 --out out/archipelago
+uv run worldgen --seed 7 --format raw --out out/raw            # the bundle for other languages
 uv run worldgen-ui                                             # the generator with a UI: edit, run stages, export
 uv run worldgen-ui --config examples/archipelago.yaml --seed 3 --run-all
 uv run python examples/generate.py                             # generate, export, load, show one patch in a window
 ```
 
 The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pictures of the window;
-`--layer "land mask"` picks the map layer it settles on.
+`--layer "land mask"` picks the map layer it settles on; `--export-dialog` (with `--format raw`) opens Export world.
 
 ## Layout
 
@@ -37,6 +42,7 @@ The UI's `--screenshot out.png` (with `--run-all`, and `--3d`) takes scripted pi
   upgrade), `grid.py` (array helpers), `preview.py` (the hillshaded preview and the deterministic
   `write_npz` / `write_png`), `terrain.py` (`TerrainData`, the terrain in memory, with its derived arrays
   lazy), `terrain_io.py` (`generate_terrain`, `export_terrain`, `load_terrain`: the terrain bundle),
+  `terrain_export.py` (the raw bundle, JSON and raw arrays for other languages; written, never read back),
   `patches.py` (reading a terrain in patches), `__main__.py` (the `worldgen` CLI).
   Generation runs once, offline: favour clear code over speed there.
 - `src/worldgen/mesh/`: meshes and the overview (`overview.py`, `builders.py` — pure numpy, so they run on

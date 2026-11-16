@@ -12,12 +12,14 @@ import math
 import tempfile
 from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from pathlib import Path
+from typing import NamedTuple
 
 import pyray as rl
 
 import rayscreen
-from rayscreen import Column, Menu, MenuItem, ScreenManager, Theme, Window, mouse_free
+from rayscreen import Column, FileWindow, Menu, MenuItem, ScreenManager, Theme, Window, mouse_free
 from worldgen.generator.config import ConfigError
+from worldgen.generator.terrain_io import ExportFormat, bundle_files, listed, stale_files
 from worldgen.ui.model.log import Log, Source
 from worldgen.ui.model.map.layers import LAYERS, has_layer, layers_for_stage, readout
 from worldgen.ui.model.map.plan_view import metres_per_pixel, to_world
@@ -28,7 +30,7 @@ from worldgen.ui.model.recipe.form import Kind, blank, box_kind, parse, recipe_f
 from worldgen.ui.model.recipe.recipe import FieldPath, Recipe, renumbered
 from worldgen.ui.model.recipe.rules import RULES, can_move, can_remove, new_rule
 from worldgen.ui.model.recipe.sizes import size_notes
-from worldgen.ui.model.saving import is_terrain, occupied, save_terrain
+from worldgen.ui.model.saving import occupied, save_terrain, terrain_format
 from worldgen.ui.model.session import Session, StageState
 from worldgen.ui.model.stages import STAGES, Status
 from worldgen.ui.view import events as ev
@@ -46,6 +48,13 @@ LEFT, MIDDLE = rl.MouseButton.MOUSE_BUTTON_LEFT, rl.MouseButton.MOUSE_BUTTON_MID
 TURN = 0.006  # radians per pixel of a turning drag
 
 
+class Export(NamedTuple):
+    """Where Export world writes, and in which format."""
+
+    folder: Path
+    format: ExportFormat
+
+
 class Controller:
     def __init__(
         self, recipe: Recipe, seed: int, out: Path | None = None, executor: Executor | None = None, log: Log | None = None,
@@ -61,6 +70,7 @@ class Controller:
         self.session = Session(seed, executor)
         out = out or Path(tempfile.mkdtemp(prefix="worldgen-ui-"))
         self.world_path = _shown(out)  # where Export world writes
+        self.export_format: ExportFormat = "npz"  # and in which format
         self.form = recipe_form()
         self.layer: str | None = None  # the layer the map shows
         self.pending_layer: str | None = None  # a layer to show once nothing is running (the UI's --layer)
@@ -76,9 +86,9 @@ class Controller:
         self._asking: tuple[str, Path] | None = None  # what the overwrite question is about: "recipe" or "world", and where
         self._titled: str | None = None  # the window's title
         self._jobs = executor or ThreadPoolExecutor(1, thread_name_prefix="map-and-save")  # map images, exporting
-        self._save_to: Path | None = None  # Export world was pressed: export here once the stages are up to date
-        self._saving: tuple[Path, Future] | None = None
-        self._saved: Path | None = None  # the folder last exported to
+        self._save_to: Export | None = None  # Export world was pressed: export this once the stages are up to date
+        self._saving: tuple[Export, Future] | None = None
+        self._saved: Export | None = None  # the folder last exported to, and its format
         self._wanted: ImageKey | None = None  # the image the map should show
         self._drawing: tuple[ImageKey, Future] | None = None
         self._on_map: ImageKey | None = None  # the image the map shows
@@ -139,9 +149,9 @@ class Controller:
                 self._say(f"ran {', '.join(self._ran)} in {seconds:.1f} s")
             self._ran = []
         if self._save_to is not None and not self.session.busy:  # Export world was waiting for this run
-            out, self._save_to = self._save_to, None
+            export, self._save_to = self._save_to, None
             if self.up_to_date():
-                self._start_saving(out)
+                self._start_saving(export)
             elif not self.message_is_error:
                 self._say("not saved: the recipe changed while the stages ran; press Export world again", error=True)
         if self._saving is not None:
@@ -399,6 +409,10 @@ class Controller:
                 self.world_path = text.strip()
             case ev.SaveWorld():
                 self._save_world()
+            case ev.FormatChosen(format):
+                self.export_format = format
+                if isinstance(window := self._window(windows.SAVE_WORLD), FileWindow):
+                    windows.show_format(window, format)
             case ev.Overwrite():
                 self._overwrite()
             case ev.DialogAsked(window):
@@ -494,7 +508,7 @@ class Controller:
         """Open a dialog with the path it is about."""
         make = {windows.OPEN: lambda: windows.open_window(self.recipe_path),
                 windows.SAVE_AS: lambda: windows.save_as_window(self.recipe_path),
-                windows.SAVE_WORLD: lambda: windows.save_world_window(self.world_path)}
+                windows.SAVE_WORLD: lambda: windows.save_world_window(self.world_path, self.export_format)}
         if self._window(window_id) is None:
             self.screen.open(make[window_id]())
 
@@ -565,39 +579,43 @@ class Controller:
         not run first."""
         if not self.savable:
             return
-        out = Path(self.world_path).expanduser()
-        if occupied(out) and out != self._saved and not overwrite:
+        export = Export(Path(self.world_path).expanduser(), self.export_format)
+        out = export.folder
+        if occupied(out) and export != self._saved and not overwrite:
             self._asking = ("world", out)
-            what = "a terrain" if is_terrain(out) else "files"
-            self.screen.open(windows.overwrite_world_window(_shown(out), what))
-            self._say(f"{_shown(out)} already holds {what}: write the terrain over it?", error=True)
+            held = terrain_format(out)
+            what = f"a terrain ({held})" if held else "files"
+            removed = tuple(name for name in stale_files(export.format) if (out / name).exists())
+            self.screen.open(windows.overwrite_world_window(_shown(out), what, export.format, removed))
+            self._say(f"{_shown(out)} already holds {what}: write the terrain ({export.format}) over it?", error=True)
             return
         self._close(windows.SAVE_WORLD)
         if self.up_to_date():
-            self._start_saving(out)
+            self._start_saving(export)
         else:
             self._run(STAGES[-1])
-            self._save_to = out
+            self._save_to = export
             self._say(f"{self.message}, then exporting to {_shown(out)}")
 
-    def _start_saving(self, out: Path) -> None:
+    def _start_saving(self, export: Export) -> None:
         terrain = self.session.states[STAGES[-1]].progress.world
-        self._saving = (out, self._jobs.submit(save_terrain, terrain, self.recipe.text(), out))
-        self._say(f"exporting the terrain to {_shown(out)}")
+        job = self._jobs.submit(save_terrain, terrain, self.recipe.text(), export.folder, export.format)
+        self._saving = (export, job)
+        self._say(f"exporting the terrain ({export.format}) to {_shown(export.folder)}")
 
     def _saved_or_failed(self) -> None:
         """Take in an export that has finished, if one has."""
-        out, job = self._saving
+        export, job = self._saving
         if not job.done():
             return
         self._saving = None
         try:
             job.result()
         except Exception as e:  # noqa: BLE001 - shown, not fatal
-            self._say(f"cannot export the terrain to {_shown(out)}: {e}", error=True)
+            self._say(f"cannot export the terrain to {_shown(export.folder)}: {e}", error=True)
             return
-        self._saved = out
-        self._say(f"exported the terrain to {_shown(out)}: terrain.yaml, terrain.npz, preview.png")
+        self._saved = export
+        self._say(f"exported the terrain to {_shown(export.folder)}: {listed(bundle_files(export.format))}")
 
     def _say(self, message: str, error: bool = False) -> None:
         """Put `message` in the status line, and in the log."""

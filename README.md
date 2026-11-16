@@ -52,6 +52,7 @@ With the CLI, into `out/` by default:
 ```sh
 uv run worldgen --seed 7                                     # the bundled default recipe, into out/seed-7
 uv run worldgen --config examples/archipelago.yaml --seed 42 --out out/archipelago
+uv run worldgen --seed 7 --format raw --out out/raw          # the bundle for clients in other languages
 uv run worldgen --seed 7 --preview-only --out .              # just preview.png
 ```
 
@@ -65,7 +66,7 @@ uv run worldgen-ui --config examples/archipelago.yaml --seed 3 --run-all
 The recipe as forms on the right, the terrain on the left as it stands after each stage, in 2D or 3D. A
 layer dropdown switches the map between the heightfield, the land, mountain and terrace masks, erosion's
 changes and sediment, the water, the climate and the biomes; hovering a cell reads out what lies under
-it. **Export world...** writes the terrain bundle. Opening a bundle's `terrain.yaml` as a recipe also
+it. **Export world...** writes the terrain bundle, in either format. Opening a bundle's `terrain.yaml` as a recipe also
 brings its seed.
 
 ![worldgen-ui, 2D: the default island after all five stages](docs/screenshots/ui-2d.png)
@@ -90,6 +91,9 @@ out/island/
   terrain.npz    # the arrays, compressed deterministically
   preview.png    # shaded biome & water preview
 ```
+
+That is the npz bundle, for Python. For a client in another language, `--format raw` writes JSON and raw
+little-endian arrays instead (see [Terrain bundle formats](#terrain-bundle-formats)).
 
 ## Load and use a world
 
@@ -139,31 +143,16 @@ mesh = patch.mesh() # terrain and water meshes, ready for worldgen.mesh.gpu's Gp
 `examples/generate.py` shows the whole flow: generate, export, load, take the patch under a point and
 draw it in a window.
 
-### What's in terrain.npz
+### Terrain bundle formats
 
-Whole-terrain arrays, not patch files — patches are exact slices of these, cut on demand. For a world
-of `N` cells per side (`world.size_cells`):
+A bundle comes in one of two formats, chosen with `--format` (the CLI), the Format dropdown (Export
+world) or `export_terrain(terrain, out, format="raw")`. Both hold the same whole-terrain arrays, not patch
+files: patches are exact slices of these, cut on demand. Exporting one format into a folder removes the
+other's files from it.
 
-| Entry | Shape | Type | Meaning |
-|---|---|---|---|
-| `elevation` | (N+1)² | float64 | ground height, metres — the heightmap |
-| `water` | (N+1)² | float64 | water surface height, `NaN` where dry |
-| `sea` | (N+1)² | bool | open sea |
-| `lake_id` | (N+1)² | uint16 | lake number, 0 = none |
-| `river` | (N+1)² | uint8 | river strength, 0 = none |
-| `flow_dir` | (N+1)² | uint8 | D8 flow direction code |
-| `biome` | N² | uint8 | biome index per cell, into `biomes.rules` in terrain.yaml |
-| `color` | N²×3 | uint8 | ground colour per cell |
-| `temperature` | N² | float32 | °C |
-| `moisture` | N² | float32 | 0–1 |
-| `sediment` | N² | float32 | metres of sediment left by erosion |
-| `meta` | — | JSON | lakes (id, level, bbox, outlet, area) and rivers (polylines of vertex coordinates) |
-
-Vertex grids are (N+1)² because they store the corners of the N² cells. `slope`, `relief` and
-`biome_weights` are not stored: they are pure functions of the stored arrays, recomputed exactly on
-first use.
-
-A `.npz` is a zip of `.npy` files, so plain numpy reads it, no worldgen needed:
+**npz** (the default, for Python): `terrain.yaml`, `terrain.npz` and `preview.png`. `load_terrain` and
+`TerrainData.load` read it. A `.npz` is a zip of `.npy` files, so plain numpy reads it too, no worldgen
+needed:
 
 ```python
 import json
@@ -173,6 +162,54 @@ with np.load("out/island/terrain.npz") as data:
     elevation = data["elevation"]
     meta = json.loads(str(data["meta"]))  # {"lakes": [...], "rivers": [...]}
 ```
+
+**raw** (for clients in other languages: C#, C++, Rust, JavaScript, GDScript): a JSON manifest and one raw
+file per array, readable with a JSON parser and a file read. worldgen writes it and never reads it back.
+
+```
+out/island/
+  terrain.json      # the manifest: format, version, seed, world, biomes, the D8 table, client, and per
+                    # array its file, dtype, grid, shape (and nodata, nan, units, range where they apply)
+  terrain.yaml      # the recipe, as in the npz bundle
+  meta.json         # lakes and rivers
+  arrays/*.bin      # one per array: row-major [z][x], little-endian, no header
+  preview.png
+```
+
+A `.bin` file is exactly `product(shape) * size_of(dtype)` bytes; sample (x, z) of a grid `width` samples
+wide is at index `z * width + x`. `sea` is one byte per vertex, 0 or 1. `water` is NaN where dry. The
+raw bundle also holds the derived arrays, so a client need not port them. `terrain.json`'s `client` is the
+recipe's `client` section, so a client needs no YAML parser.
+[`examples/read_raw.mjs`](examples/read_raw.mjs) reads one with nothing but node:
+
+```sh
+uv run worldgen --seed 7 --format raw --out out/raw
+node examples/read_raw.mjs out/raw
+```
+
+The arrays, for a world of `N` cells per side (`world.size_cells`):
+
+| Entry | Shape | Type (npz / raw) | Meaning |
+|---|---|---|---|
+| `elevation` | (N+1)² | float64 | ground height, metres: the heightmap |
+| `water` | (N+1)² | float64 | water surface height, `NaN` where dry |
+| `sea` | (N+1)² | bool / uint8 | open sea |
+| `lake_id` | (N+1)² | uint16 | lake number, 0 = none |
+| `river` | (N+1)² | uint8 | river strength, 0 = none |
+| `flow_dir` | (N+1)² | uint8 | D8 flow direction code (0-7 = E, SE, S, SW, W, NW, N, NE; z runs south), 255 = none |
+| `biome` | N² | uint8 | biome index per cell, into `biomes.rules` |
+| `color` | N²×3 | uint8 | ground colour per cell, sRGB, channels interleaved |
+| `temperature` | N² | float32 | °C |
+| `moisture` | N² | float32 | 0–1 |
+| `sediment` | N² | float32 | metres of sediment left by erosion |
+| `slope` | N² | raw only: float32 | degrees |
+| `relief` | N² | raw only: float32 | metres above the lowest ground within `biomes.relief_radius` |
+| `biome_weights` | rules×N² | raw only: float32 | each biome rule's soft share of the cell, summing to 1 |
+| `meta` | — | JSON (`meta.json` in raw) | lakes (id, level, bbox, outlet, area) and rivers (polylines of vertex coordinates, source first) |
+
+Vertex grids are (N+1)² because they store the corners of the N² cells; vertex (x, z) sits at world
+point `(x, z) * cell_size`. The npz bundle leaves out `slope`, `relief` and `biome_weights`: they are pure
+functions of the stored arrays, recomputed exactly on first use.
 
 ## Recipes
 
@@ -203,7 +240,7 @@ One package, `worldgen`, under `src/`:
   `pipeline.py` runs the stages in order, `stages/` holds one module per stage (`elevation`, `erosion`,
   `hydrology`, `climate`, `biomes`), `noise.py` and `grid.py` the array helpers they share. `terrain.py`
   is the terrain in memory, `terrain_io.py` the bundle on disk (`generate_terrain`, `export_terrain`,
-  `load_terrain`), `patches.py` reading a terrain in patches, `preview.py` the hillshaded preview and the
+  `load_terrain`), `terrain_export.py` the raw bundle for other languages, `patches.py` reading a terrain in patches, `preview.py` the hillshaded preview and the
   deterministic file writers, `__main__.py` the `worldgen` CLI.
 - `worldgen/mesh/` — terrain and water meshes: `builders.py` builds them as pure numpy arrays (so they
   run on worker threads), `overview.py` downsamples the whole terrain to a low resolution for the 3D view

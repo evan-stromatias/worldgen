@@ -227,13 +227,69 @@ def test_export_world_asks_before_writing_into_a_folder_with_files(small_control
     out.mkdir()
     (out / "notes.txt").write_text("mine")
     save(c, out)
-    assert c.message_is_error and "write the terrain over it?" in c.message and not (out / ARRAYS_FILE).exists()
+    assert c.message_is_error and "write the terrain (npz) over it?" in c.message and not (out / ARRAYS_FILE).exists()
     c.act(ev.Overwrite())
     c.update()  # takes in the run, which starts the export
     c.update()  # takes in the export
     assert (out / ARRAYS_FILE).exists() and (out / "notes.txt").read_text() == "mine"
     save(c, out)  # the folder it exported to last: no question
     assert c.message.startswith("exported the terrain to")
+
+
+def test_the_format_dropdown_chooses_the_export_format(small_controller):
+    c = small_controller
+    raw = rayscreen.Event("world", windows.SAVE_WORLD_FORMAT, windows.FORMAT_CHOICES["raw"])
+    assert ev.translate([raw], c.form, c.recipe) == [ev.FormatChosen("raw")]
+
+    # The dialog opens on the format chosen, and its prompt follows the choice
+    c.handle([rayscreen.Event("world", "save-world", None)])
+    window = c.screen.window
+    assert isinstance(window, FileWindow) and "terrain.npz" in window.prompt
+    dropdown = next(node for node in walk(window.root) if getattr(node, "id", None) == windows.SAVE_WORLD_FORMAT)
+    assert dropdown.choices[dropdown.current] == windows.FORMAT_CHOICES["npz"]
+    c.handle([raw])
+    assert c.export_format == "raw" and "terrain.json" in window.prompt and "terrain.npz" not in window.prompt
+    c.handle([rayscreen.Event("world", f"{windows.SAVE_WORLD}.cancel", None)])
+    c.handle([rayscreen.Event("world", "save-world", None)])
+    dropdown = next(node for node in walk(c.screen.window.root) if getattr(node, "id", None) == windows.SAVE_WORLD_FORMAT)
+    assert dropdown.choices[dropdown.current] == windows.FORMAT_CHOICES["raw"]
+
+
+def test_export_world_writes_a_raw_bundle(small_controller, tmp_path):
+    c, out = small_controller, tmp_path / "raw"
+    c.act(ev.FormatChosen("raw"))
+    save(c, out)
+    assert not c.message_is_error
+    assert c.message.endswith("terrain.json, terrain.yaml, meta.json, arrays/*.bin, preview.png")
+    written = set(files(out))
+    assert {"terrain.json", "meta.json", "arrays/elevation.bin", RECIPE_FILE, PREVIEW_FILE} <= written
+    assert ARRAYS_FILE not in written
+    assert (out / RECIPE_FILE).read_text().startswith(f"seed: {SEED}\n\n")  # the UI's own recipe text
+
+
+def test_export_world_asks_before_switching_the_format_of_a_folder(small_controller, tmp_path):
+    """Exporting raw into the folder just exported as npz removes terrain.npz: that asks first, and says so."""
+    c, out = small_controller, tmp_path / "both"
+    save(c, out)
+    c.act(ev.FormatChosen("raw"))
+    save(c, out)
+    assert c.message_is_error and "holds a terrain (npz)" in c.message and (out / ARRAYS_FILE).exists()
+    question = next(node for node in walk(c.screen.window.root) if getattr(node, "id", None) == f"{OVERWRITE}.text")
+    assert "terrain.npz is removed" in question.text
+    c.act(ev.Overwrite())
+    c.update()
+    assert not (out / ARRAYS_FILE).exists() and (out / "terrain.json").is_file()
+    save(c, out)  # the same folder and format again: no question
+    assert c.message.startswith("exported the terrain to") and not c.message_is_error
+
+
+def test_terrain_format_tells_the_bundles_apart(small_terrain, tmp_path):
+    from worldgen.ui.model.saving import save_terrain, terrain_format
+
+    (tmp_path / "empty").mkdir()
+    assert terrain_format(tmp_path / "empty") is None
+    assert terrain_format(save_terrain(small_terrain, "", tmp_path / "npz")) == "npz"
+    assert terrain_format(save_terrain(small_terrain, "", tmp_path / "raw", "raw")) == "raw"
 
 
 def test_the_terrain_folder_starts_as_a_new_empty_temporary_folder(tmp_path):

@@ -12,6 +12,7 @@ from rayscreen import (
     SMALL,
     Button,
     Column,
+    Dropdown,
     FileWindow,
     Fill,
     Label,
@@ -22,11 +23,18 @@ from rayscreen import (
     Tooltip,
     Window,
 )
+from worldgen.generator.terrain_io import ExportFormat, bundle_files, listed
 from worldgen.ui.model.log import Line, Source
 
 OPEN, SAVE_AS, SAVE_WORLD = "dialog.open", "dialog.save-as", "dialog.save-world"
 OPEN_PATH, SAVE_AS_PATH, SAVE_WORLD_PATH = f"{OPEN}.path", f"{SAVE_AS}.path", f"{SAVE_WORLD}.path"
+SAVE_WORLD_FORMAT = f"{SAVE_WORLD}.format"
 OVERWRITE, LOG = "dialog.overwrite", "log-window"
+# Export world's format choices, as its dropdown shows them (raygui's texts must not hold ";")
+FORMAT_CHOICES: dict[ExportFormat, str] = {
+    "npz": "npz: for Python (worldgen, numpy)",
+    "raw": "raw: for other languages (C#, C++, Rust, JS...)",
+}
 LOG_SIZE = (620.0, 320.0)
 LOG_SHOWN = 300  # the newest lines the log window holds
 BOTTOM = -1e9  # a scroll offset past any content: raygui clamps it to the bottom
@@ -66,26 +74,42 @@ def save_as_window(path: str) -> FileWindow:
     )
 
 
-def save_world_window(path: str) -> FileWindow:
-    prompt = ("A folder for the terrain bundle: terrain.yaml (the recipe and the seed), terrain.npz (the arrays) "
-              "and preview.png. Stages that are not up to date run first.")
+def save_world_window(path: str, format: ExportFormat = "npz") -> FileWindow:
+    """A folder for the terrain bundle, and its format: the prompt lists the files the chosen format writes."""
+    choices = tuple(FORMAT_CHOICES.values())
     return FileWindow(
         SAVE_WORLD,
         "Export the world",
         path or ".",
         mode="directory",
-        prompt=prompt,
+        prompt=save_world_prompt(format),
         ok="Export",
+        extra=[Row(children=[Label(f"{SAVE_WORLD_FORMAT}.label", "Format"),
+                             Dropdown(SAVE_WORLD_FORMAT, choices, choices.index(FORMAT_CHOICES[format]), weight=1)])],
     )
+
+
+def save_world_prompt(format: ExportFormat) -> str:
+    return f"A folder for the terrain bundle: {listed(bundle_files(format))}. Stages that are not up to date run first."
+
+
+def show_format(window: FileWindow, format: ExportFormat) -> None:
+    """The open Export world dialog, after its format was chosen: the prompt names that format's files."""
+    window.prompt = save_world_prompt(format)
+    window.refresh()
 
 
 def overwrite_recipe_window(name: str) -> Window:
     return question_window(OVERWRITE, "Overwrite?", f"{name} exists. Saving drops the file's comments. Overwrite?", "Overwrite")
 
 
-def overwrite_world_window(name: str, what: str) -> Window:
-    """`what` the folder holds: "a terrain", or "files"."""
-    return question_window(OVERWRITE, "Write over it?", f"{name} already holds {what}. Write the terrain over it?", "Write")
+def overwrite_world_window(name: str, what: str, format: ExportFormat = "npz", removed: tuple[str, ...] = ()) -> Window:
+    """`what` the folder holds: "a terrain (npz)", or "files"; `removed` are the other format's files there, which
+    exporting `format` removes."""
+    text = f"{name} already holds {what}. Write the terrain ({format}) over it?"
+    if removed:
+        text += f" {listed(removed)} {'is' if len(removed) == 1 else 'are'} removed."
+    return question_window(OVERWRITE, "Write over it?", text, "Write")
 
 
 class LogRow(NamedTuple):
