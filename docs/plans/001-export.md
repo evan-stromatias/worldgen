@@ -1,6 +1,16 @@
 # Plan: export formats for clients outside Python
 
-Status: proposal, reviewed. Nothing here is implemented yet.
+Status: implemented. Where the code differs from this plan:
+
+- The raw writer is `terrain_export.write_raw(out_dir, terrain, meta)`, called by `export_terrain(…, "raw")`,
+  which writes terrain.yaml and preview.png for both formats; there is no separate `export_raw`.
+- `terrain_io.stale_files(format)` and `listed(files)` sit beside `bundle_files`; `listed` shows the array
+  files as one `arrays/*.bin` entry in messages.
+- Choosing a format updates the open Export world dialog's prompt in place (`windows.show_format`), so the
+  folder typed and the listing stay as they were.
+- The second-language reader is `examples/read_raw.mjs` (node), and a test runs it when node is installed.
+- Every NaN in `water.bin` is already `0x7FF8000000000000` today; nothing normalises it, and the format
+  does not promise that bit pattern.
 
 worldgen exports a terrain as a **terrain bundle**: `terrain.yaml`, `terrain.npz` and `preview.png`
 (`src/worldgen/generator/terrain_io.py`). It is easy to read from Python and harder from a game written

@@ -12,9 +12,10 @@ import sys
 from pathlib import Path
 
 from worldgen.generator.config import ConfigError
+from worldgen.generator.terrain_io import EXPORT_FORMATS
 from worldgen.ui.model.log import Log, capture
 from worldgen.ui.model.recipe.recipe import Recipe
-from worldgen.ui.view.events import RunAll
+from worldgen.ui.view.events import DialogAsked, RunAll
 
 
 def main() -> None:
@@ -26,6 +27,10 @@ def main() -> None:
     parser.add_argument(
         "--out", type=Path, help="Where Export world writes (default: a new folder in the system's temporary folder)."
     )
+    parser.add_argument(
+        "--format", choices=EXPORT_FORMATS, default="npz",
+        help="Export world's format to start with: npz for Python, raw (JSON and raw arrays) for other languages.",
+    )
     parser.add_argument("--width", type=int, default=1600, help="Window width in pixels.")
     parser.add_argument("--height", type=int, default=900, help="Window height in pixels.")
     parser.add_argument("--run-all", action="store_true", help="Run every stage at start, as Run all does.")
@@ -33,6 +38,9 @@ def main() -> None:
         "--layer", help="Show this map layer once the run settles (with --run-all), e.g. --layer \"land mask\"."
     )
     parser.add_argument("--log", action="store_true", help="Open the log window from the start.")
+    parser.add_argument(
+        "--export-dialog", action="store_true", help="Open the Export world dialog from the start (for --screenshot)."
+    )
     parser.add_argument("--3d", dest="three_d", action="store_true", help="Show the map in 3D from the start.")
     parser.add_argument("--light", action="store_true", help="Start in light mode, not dark (the button at the top right switches).")
     parser.add_argument(
@@ -65,10 +73,15 @@ def main() -> None:
                 controller.session.seed = recipe.seed_hint  # a terrain bundle's seed, unless --seed was given
             controller.three_d = args.three_d
             controller.pending_layer = args.layer
+            controller.export_format = args.format
             if args.log:
                 controller.toggle_log()
             if args.run_all:
                 controller.act(RunAll())
+            if args.export_dialog:
+                from worldgen.ui.view.windows import SAVE_WORLD
+
+                controller.act(DialogAsked(SAVE_WORLD))
             app.run(controller, theme, args.screenshot)
         finally:
             app.close(controller, theme)

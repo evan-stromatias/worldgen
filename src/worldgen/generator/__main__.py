@@ -2,9 +2,12 @@
 
     uv run worldgen --seed 7
     uv run worldgen --config my_terrain.yaml --seed 42 --out terrains/archipelago
+    uv run worldgen --seed 7 --format raw
 
 Writes terrain.yaml (the recipe and the seed), terrain.npz (the arrays, compressed) and preview.png
-to the output directory. With --preview-only, writes only preview.png.
+to the output directory. With --format raw, writes the bundle for clients in other languages instead:
+terrain.json (the manifest), terrain.yaml, meta.json (lakes and rivers), arrays/*.bin (raw little-endian)
+and preview.png. With --preview-only, writes only preview.png.
 """
 
 import argparse
@@ -14,7 +17,7 @@ from pathlib import Path
 from worldgen.config import DEFAULT_RECIPE
 from worldgen.generator import preview
 from worldgen.generator.config import ConfigError, load_config
-from worldgen.generator.terrain_io import export_terrain, generate_terrain
+from worldgen.generator.terrain_io import EXPORT_FORMATS, bundle_files, export_terrain, generate_terrain, listed
 
 
 def main() -> None:
@@ -27,6 +30,10 @@ def main() -> None:
     )
     parser.add_argument(
         "--out", type=Path, help="Output directory (default: out/seed-<seed>)."
+    )
+    parser.add_argument(
+        "--format", choices=EXPORT_FORMATS, default="npz",
+        help="npz: for Python (worldgen's load_terrain, numpy); raw: JSON and raw arrays, for other languages.",
     )
     parser.add_argument(
         "--preview-only",
@@ -56,9 +63,9 @@ def main() -> None:
         print(f"wrote {out / 'preview.png'}")
     else:
         out = args.out or Path("out") / f"seed-{args.seed}"
-        export_terrain(terrain, out)
-        print(f"wrote {out}: terrain.yaml, terrain.npz ({len(terrain.lakes)} lakes, "
-              f"{len(terrain.rivers)} rivers), preview.png")
+        export_terrain(terrain, out, args.format)
+        print(f"wrote {out}: {listed(bundle_files(args.format))} ({len(terrain.lakes)} lakes, "
+              f"{len(terrain.rivers)} rivers)")
     side = size * config.world.cell_size / 1000
     land = 1 - float(terrain.sea.mean())  # lakes and rivers count as land here; only the sea does not
     print(f"  world {side:g} x {side:g} km = {side * side:.2f} km², land {side * side * land:.2f} km² ({land:.0%})")
