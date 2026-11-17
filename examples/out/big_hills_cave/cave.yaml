@@ -1,0 +1,163 @@
+# A subterranean cave bundle's recipe and seed, written by worldgen.
+
+seed: 42
+version: 0.3.0
+world:
+  cell_size: 1.0
+  patch_cells: 128
+  size_cells: 512
+  sea_level: 0.0
+elevation:
+  mask: continent
+  mask_falloff:
+  - 0.55
+  - 0.95
+  mask_distortion: 0.15
+  falloff: 0.0
+  shore: 0.08
+  max_height: 120.0
+  sea_floor: -20.0
+  noise:
+    octaves: 5
+    frequency: 0.003
+    lacunarity: 2.0
+    gain: 0.5
+  warp:
+    strength: 70.0
+    frequency: 0.002
+  archipelago:
+    islands: 7
+    size:
+    - 0.1
+    - 0.3
+    spacing: 0.8
+  mountains:
+    enabled: true
+    wavelength: 250.0
+    octaves: 6
+    gain: 0.5
+    sharpness: 1.8
+    height: 0.65
+    coverage: 0.4
+    range_wavelength: 1500.0
+    warp: true
+  terraces:
+    enabled: false
+    step: 12.0
+    sharpness: 0.7
+    where: noise
+    wavelength: 800.0
+    coverage: 0.3
+erosion:
+  enabled: false
+  droplets: 1.0
+  batch: 8192
+  levels: 3
+  lifetime: 40
+  inertia: 0.1
+  capacity: 1.0
+  min_slope: 0.01
+  erode_rate: 0.3
+  deposit_rate: 0.3
+  evaporation: 0.02
+  gravity: 0.1
+  radius: 2.0
+  smoothing: 1
+  talus_angle: 35.0
+  rock_talus_angle: 70.0
+  thermal_iterations: 40
+  thermal_rate: 0.5
+cavern:
+  clearance: 40.0
+  ceiling_mode: inverted
+  ceiling_scale: 0.75
+  min_passage: 3.0
+  perimeter_wall: true
+  wall_thickness: 2
+hydrology:
+  enabled: true
+  water_table: -5.0
+climate:
+  temperature_base: 10.0
+  geothermal_gradient: 0.03
+  ambient_humidity: 0.8
+materials:
+  blend_width: 0.08
+  relief_radius: 40.0
+  rules:
+  - id: sump
+    when:
+      elevation: null
+      temperature: null
+      moisture: null
+      slope: null
+      sediment: null
+      relief: null
+      water: lake
+    ground:
+      color:
+      - 45
+      - 65
+      - 90
+      jitter: 0.02
+  - id: flowstone
+    when:
+      elevation: null
+      temperature: null
+      moisture: null
+      slope:
+      - 40.0
+      - 90.0
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 220
+      - 215
+      - 200
+      jitter: 0.03
+  - id: crystal_vault
+    when:
+      elevation: null
+      temperature: null
+      moisture: null
+      slope: null
+      sediment: null
+      relief:
+      - 35.0
+      - 200.0
+      water: null
+    ground:
+      color:
+      - 180
+      - 215
+      - 235
+      jitter: 0.05
+  - id: fungal_grotto
+    when:
+      elevation: null
+      temperature:
+      - 12.0
+      - 40.0
+      moisture:
+      - 0.85
+      - 1.0
+      slope: null
+      sediment: null
+      relief: null
+      water: null
+    ground:
+      color:
+      - 60
+      - 130
+      - 85
+      jitter: 0.06
+  - id: limestone
+    when: null
+    ground:
+      color:
+      - 130
+      - 125
+      - 120
+      jitter: 0.05

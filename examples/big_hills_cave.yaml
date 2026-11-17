@@ -1,0 +1,75 @@
+# Subterranean cavern recipe with massive rolling hills, deep trenches, and towering vaulted ceilings.
+# Run with:
+#   uv run cavegen-ui --config examples/big_hills_cave.yaml --seed 42 --3d --run-all
+#   uv run cavegen-ui --config examples/big_hills_cave.yaml --seed 42 --fps --run-all
+
+version: 0.3.0
+world:
+  cell_size: 1.0           # 1 metre per cell
+  patch_cells: 128         # cells per patch
+  size_cells: 512          # 512 x 512 metres subterranean domain
+  sea_level: 0.0
+
+elevation:
+  mask: continent          # solid subterranean ground everywhere
+  falloff: 0.0             # no sea edge falloff
+  shore: 0.08
+  max_height: 120.0        # high vertical relief: tall subterranean hills up to ~100m+
+  sea_floor: -20.0         # deep trenches and subterranean rift valleys
+  noise:
+    octaves: 5
+    frequency: 0.003       # broad rolling swells
+    lacunarity: 2.0
+    gain: 0.5
+  warp:
+    strength: 70.0         # domain warping to bend hills into winding ridges
+    frequency: 0.002
+  mountains:
+    enabled: true          # adds sharp subterranean ridges and crests
+    wavelength: 250.0      # ridge crest spacing in metres
+    height: 0.65           # share of max_height for mountain ridges
+    coverage: 0.40         # mountain ridge density
+    sharpness: 1.8         # defined ridgelines
+  terraces:
+    enabled: false
+
+erosion:
+  enabled: false           # disabled for fast rendering (enable for hydraulic gullies)
+
+cavern:
+  clearance: 40.0          # 40m nominal headroom for monumental cathedral caverns
+  ceiling_mode: inverted   # inverted: valleys become vaulted domes; hill crests become stalactites
+  ceiling_scale: 0.75      # ceiling relief damping to maintain navigable corridors
+  min_passage: 3.0         # cells under 3m fuse into natural load-bearing pillars
+  perimeter_wall: true     # solid boundary rock walls
+  wall_thickness: 2
+
+hydrology:
+  enabled: true
+  water_table: -5.0        # flooded sumps and subterranean lakes in the lowest depressions
+
+climate:
+  temperature_base: 10.0   # cooler base temperature
+  geothermal_gradient: 0.03 # depth lapse rate: lower depths are warmer
+  ambient_humidity: 0.80
+
+materials:
+  blend_width: 0.08
+  relief_radius: 40.0
+  rules:
+  - id: sump
+    when: {water: lake}
+    ground: {color: [45, 65, 90], jitter: 0.02}
+  - id: flowstone
+    when: {slope: [40.0, 90.0]}
+    ground: {color: [220, 215, 200], jitter: 0.03}
+  - id: crystal_vault
+    when: {relief: [35.0, 200.0]}
+    ground: {color: [180, 215, 235], jitter: 0.05}
+  - id: fungal_grotto
+    when: {moisture: [0.85, 1.0], temperature: [12.0, 40.0]}
+    ground: {color: [60, 130, 85], jitter: 0.06}
+  - id: limestone
+    ground: {color: [130, 125, 120], jitter: 0.05}
+
+client: {}
