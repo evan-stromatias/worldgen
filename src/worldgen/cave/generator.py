@@ -6,6 +6,8 @@ Deterministic across runs given the same recipe and seed.
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -13,6 +15,11 @@ from worldgen.cave import pipeline
 from worldgen.cave.config import CaveConfig
 from worldgen.generator.grid import to_cells
 from worldgen.generator.stages import biomes, climate
+
+if TYPE_CHECKING:
+    from worldgen.cave.export import CaveExportFormat
+    from worldgen.cave.patches import CavePatch
+    from worldgen.mesh.builders import MeshArrays
 
 # RNG stream indices for generator stages
 STAGE_ELEVATION = 1
@@ -133,6 +140,75 @@ class CaveData:
         z = (cz + 0.5) * cell_size
         y = self.floor_at(x, z) + 1.7
         return np.array([x, y, z], dtype=np.float64), 0.0, 0.0
+
+    @property
+    def elevation(self) -> np.ndarray:
+        """Alias for floor_elevation (metres, vertex grid)."""
+        return self.floor_elevation
+
+    @property
+    def biome(self) -> np.ndarray:
+        """Alias for material (cell grid index into materials rules)."""
+        return self.material
+
+    @property
+    def patches_per_side(self) -> int:
+        """How many patches of `world.patch_cells` cells tile the cave's side."""
+        return self.config.world.size_cells // self.config.world.patch_cells
+
+    @property
+    def patch_shape(self) -> tuple[int, int]:
+        """How many patches tile the cave, along x and along z."""
+        return self.patches_per_side, self.patches_per_side
+
+    @classmethod
+    def load(cls, directory: Path | str) -> "CaveData":
+        """Read a cave bundle (a directory written by `export_cave` or the UI's Export cave)."""
+        from worldgen.cave.export import load_cave
+
+        return load_cave(directory)
+
+    def export(self, out_dir: Path | str, format: "CaveExportFormat" = "npz") -> None:
+        """Export the cave bundle to `out_dir`."""
+        from worldgen.cave.export import export_cave
+
+        export_cave(self, out_dir, format=format)
+
+    def patch(self, key: tuple[int, int]) -> "CavePatch":
+        """The patch at `key` ((px, pz), 0-based): its share of floor, ceiling, and materials."""
+        from worldgen.cave.patches import patch
+
+        return patch(self, key)
+
+    def patch_at(self, x: float, z: float) -> "CavePatch":
+        """The patch covering the point (x, z) in world metres."""
+        from worldgen.cave.patches import patch_at
+
+        return patch_at(self, x, z)
+
+    def mesh(
+        self,
+        stride: int = 1,
+        ceiling_offset: float = 0.0,
+        include_ceiling: bool = True,
+        cutaway_height: float | None = None,
+    ) -> "MeshArrays":
+        """Build dual-shell cave mesh arrays."""
+        from worldgen.cave.mesh import build_cave_mesh
+
+        return build_cave_mesh(
+            self,
+            stride=stride,
+            ceiling_offset=ceiling_offset,
+            include_ceiling=include_ceiling,
+            cutaway_height=cutaway_height,
+        )
+
+    def water_mesh(self, stride: int = 1) -> "MeshArrays | None":
+        """Build water mesh arrays if flooded."""
+        from worldgen.cave.mesh import build_cave_water_mesh
+
+        return build_cave_water_mesh(self, stride=stride)
 
 
 def _sample_grid(grid: np.ndarray, cell_size: float, x: float, z: float) -> float:

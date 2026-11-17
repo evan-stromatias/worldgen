@@ -54,6 +54,8 @@ uv run worldgen --seed 7                                     # the bundled defau
 uv run worldgen --config examples/archipelago.yaml --seed 42 --out out/archipelago
 uv run worldgen --seed 7 --format raw --out out/raw          # the bundle for clients in other languages
 uv run worldgen --seed 7 --preview-only --out .              # just preview.png
+uv run cavegen --seed 7                                      # subterranean cave into out/cave-seed-7
+uv run cavegen --config examples/big_hills_cave.yaml --seed 42 --out out/big-hills
 ```
 
 With the UI, to tune a recipe stage by stage and watch each one land:
@@ -61,6 +63,8 @@ With the UI, to tune a recipe stage by stage and watch each one land:
 ```sh
 uv run worldgen-ui                                       # from the defaults
 uv run worldgen-ui --config examples/archipelago.yaml --seed 3 --run-all
+uv run cavegen-ui                                        # cavern generator with 3D orbit and FPS inspection
+uv run cavegen-ui --config examples/big_hills_cave.yaml --seed 42 --run-all
 ```
 
 The recipe as forms on the right, the terrain on the left as it stands after each stage, in 2D or 3D. A
@@ -211,6 +215,68 @@ Vertex grids are (N+1)² because they store the corners of the N² cells; vertex
 point `(x, z) * cell_size`. The npz bundle leaves out `slope`, `relief` and `biome_weights`: they are pure
 functions of the stored arrays, recomputed exactly on first use.
 
+## Subterranean caves
+
+worldgen also generates procedural subterranean caves with dual-shell heightmaps (floor and inverted ceiling),
+structural rock pillars, subterranean lakes and sumps, and speleological materials (`cavegen` and `cavegen-ui`).
+
+### Generate a cave
+
+```python
+from worldgen.cave import CaveConfig, export_cave, generate_cave, load_config
+
+config = CaveConfig()  # or load_config("examples/big_hills_cave.yaml")
+cave = generate_cave(config, seed=42)
+export_cave(cave, "out/cavern")
+```
+
+Writing out the self-contained cave bundle:
+```
+out/cavern/
+  cave.yaml   # the recipe, the seed, and the worldgen version that wrote it
+  cave.npz    # the arrays, compressed deterministically
+  preview.png # shaded floor and sump preview
+```
+
+### Load and use a cave
+
+`CaveData` is the class for a saved cave bundle on disk:
+
+```python
+from worldgen.cave import CaveData
+
+cave = CaveData.load("out/cavern")
+
+cave.floor_elevation     # (N+1)² float64 vertex grid, metres
+cave.ceiling_elevation   # (N+1)² float64 vertex grid, metres
+cave.clearance           # N² float32 cell grid, vertical headroom (metres)
+cave.pillar_mask         # N² uint8 cell grid (1 = solid rock / pillar, 0 = open cavern)
+cave.water               # (N+1)² float64 vertex grid, water surface (NaN = dry)
+cave.material            # N² uint8 cell grid, index into config.materials.rules
+cave.color               # N² × 3 uint8 ground colours
+cave.slope               # derived floor slope in degrees per cell
+cave.relief              # derived local relief (metres)
+cave.material_weights    # soft shares per material rule
+
+# Spatial queries & spawn point
+floor_y = cave.floor_at(x, z)        # interpolated floor height
+ceiling_y = cave.ceiling_at(x, z)    # interpolated ceiling height
+clearance = cave.clearance_at(x, z)  # vertical headroom at (x, z)
+navigable = cave.is_navigable(x, z)  # inside bounds, outside pillars, headroom >= min_passage
+spawn_pos, yaw, pitch = cave.find_spawn_point()  # safe spawn coordinate inside open cavern
+
+# Patches for streaming
+nx, nz = cave.patch_shape
+patch = cave.patch_at(250.0, 250.0)  # or cave.patch((px, pz))
+patch.floor_elevation                # (P+3)² with 1-vertex apron
+patch.ceiling_elevation              # (P+3)² with 1-vertex apron
+patch.clearance                      # P² vertical headroom
+patch.pillar_mask                    # P² pillar mask
+```
+
+[`examples/generate_cave.py`](examples/generate_cave.py) shows the whole flow: generate, export, load with
+`CaveData.load`, query the safe spawn point, and inspect a patch in a window.
+
 ## Recipes
 
 A recipe is YAML: the `world` grid (size, patch and cell size, sea level) and one section per stage.
@@ -257,6 +323,11 @@ One package, `worldgen`, under `src/`:
   its layers and its 3D terrain. `view/` is rayscreen specs (the form, bars, dialogs, log window,
   tooltips, the world screen) — only `view/gl/` makes GL calls, rendering the map into a texture.
   `controller.py` is the only code that changes the model; `app.py` is the window's loop.
+- `worldgen/cave/` — subterranean cave generator: `config.py` (`CaveConfig`), `pipeline.py` (stages:
+  elevation, erosion, cavern, hydrology, climate, materials), `generator.py` (`CaveData`, `generate_cave`),
+  `export.py` (`export_cave`, `load_cave`), `patches.py` (`CavePatch`, `patch`, `patch_at`), `mesh.py`
+  (dual-shell meshes: floor, inverted ceiling, skirts), `ui/` (`cavegen-ui` with 3D Orbit and FPS camera walkthrough),
+  and `__main__.py` (`cavegen` CLI).
 
 `worldgen/config.py` (the package version and the bundled default recipe's path) and
 `worldgen/geometry.py` (plane geometry on (x, z) points) are the shared leaves every package above may

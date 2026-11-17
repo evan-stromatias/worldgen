@@ -4,15 +4,17 @@ Matches worldgen conventions: deterministic timestamps, stale file cleanup, litt
 """
 
 import json
+import zipfile
 from pathlib import Path
 from typing import Literal
 
 import numpy as np
 import yaml
 
-from worldgen.cave.config import CaveConfig
+from worldgen.cave.config import parse_config
 from worldgen.cave.generator import CaveData
 from worldgen.config import VERSION
+from worldgen.generator.config import ConfigError
 from worldgen.generator.preview import hillshade, write_npz, write_png
 
 type CaveExportFormat = Literal["npz", "raw"]
@@ -175,26 +177,46 @@ def export_cave(cave: CaveData, out_dir: Path | str, format: CaveExportFormat = 
 def load_cave(directory: Path | str) -> CaveData:
     """Load a cave from an `npz` bundle directory."""
     directory = Path(directory)
+    if (directory / MANIFEST_FILE).is_file() and not (directory / ARRAYS_FILE).exists():
+        raise ConfigError(
+            f"{directory} is a raw export, for clients in other languages; cavegen reads only npz "
+            "bundles (export with --format npz)"
+        )
     recipe_path = directory / RECIPE_FILE
     arrays_path = directory / ARRAYS_FILE
 
-    raw_yaml = yaml.safe_load(recipe_path.read_text(encoding="utf-8"))
-    seed = int(raw_yaml.pop("seed"))
-    raw_yaml.pop("version", None)
-    config = CaveConfig.model_validate(raw_yaml)
+    try:
+        raw_yaml = yaml.safe_load(recipe_path.read_text(encoding="utf-8"))
+    except OSError as e:
+        raise ConfigError(f"cannot read {recipe_path}: {e.strerror}") from None
+    except yaml.YAMLError as e:
+        raise ConfigError(f"{recipe_path} is not valid YAML: {e}") from None
 
-    with np.load(arrays_path) as data:
-        return CaveData(
-            seed=seed,
-            config=config,
-            floor_elevation=data["floor_elevation"],
-            ceiling_elevation=data["ceiling_elevation"],
-            clearance=data["clearance"],
-            pillar_mask=data["pillar_mask"],
-            water=data["water"],
-            material=data["material"],
-            color=data["color"],
-            temperature=data["temperature"],
-            moisture=data["moisture"],
-            sediment=data["sediment"],
-        )
+    if not isinstance(raw_yaml, dict):
+        raise ConfigError(f"{recipe_path}: expected a mapping of sections at the top level")
+    version = raw_yaml.pop("version", "?")
+    try:
+        seed = int(raw_yaml.pop("seed"))
+    except KeyError:
+        raise ConfigError(f"{recipe_path}: no `seed`; pass one with --seed, or use a recipe, not a cave bundle") from None
+
+    config = parse_config(raw_yaml, str(recipe_path))
+
+    try:
+        with np.load(arrays_path) as data:
+            return CaveData(
+                seed=seed,
+                config=config,
+                floor_elevation=data["floor_elevation"],
+                ceiling_elevation=data["ceiling_elevation"],
+                clearance=data["clearance"],
+                pillar_mask=data["pillar_mask"],
+                water=data["water"],
+                material=data["material"],
+                color=data["color"],
+                temperature=data["temperature"],
+                moisture=data["moisture"],
+                sediment=data["sediment"],
+            )
+    except (OSError, KeyError, TypeError, ValueError, zipfile.BadZipFile) as e:
+        raise ConfigError(f"{directory}: cannot read the cave written by worldgen {version}: {e}") from None
