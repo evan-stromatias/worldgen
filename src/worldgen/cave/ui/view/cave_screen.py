@@ -6,8 +6,10 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from rayscreen import (
+    MOON,
     PAD,
     SMALL,
+    SUN,
     Button,
     Column,
     Fill,
@@ -21,6 +23,7 @@ from rayscreen import (
     Split,
     TextBox,
     Toggle,
+    icon_text,
 )
 from worldgen.ui.model.stages import Status
 
@@ -28,6 +31,17 @@ if TYPE_CHECKING:
     pass
 
 HALVES = "cave_halves"
+THEME = "theme"
+ICON_BUTTON = 34.0
+
+
+def theme_button(dark: bool) -> Button:
+    return Button(THEME, theme_text(dark), width=ICON_BUTTON)
+
+
+def theme_text(dark: bool) -> str:
+    """The theme button's icon: what it switches to, the sun in dark mode and the moon in light."""
+    return icon_text(SUN if dark else MOON)
 
 
 @dataclass(slots=True)
@@ -53,6 +67,7 @@ class CaveShown:
     statuses: dict[str, tuple[Status, str]] = field(default_factory=dict)
     log_news: str = ""
     log_errors: bool = False
+    dark: bool = True
 
 
 class CaveScreen(Screen):
@@ -91,12 +106,13 @@ class CaveScreen(Screen):
         )
         left = Column(children=[toolbar, self.picture, status_bar], weight=1)
 
-        # Right side: Top action bar (Seed, Run all, Stop, Export cave) + Scrollable Stage Form + Collapsible Metrics
+        # Right side: Top action bar (Seed, Run all, Stop, Export cave, Theme toggle) + Scrollable Stage Form + Collapsible Metrics
         seed_box = TextBox("input_seed", s.seed, weight=1.0)
         run_all_btn = Button("run-all", "#131#Run all", enabled=s.runnable)
         stop_btn = Button("stop-all", "Stop", enabled=s.stoppable)
         export_btn = Button("btn_export", "Export cave...")
-        top_bar = Row(children=[Label("seed_label", "Seed:"), seed_box, run_all_btn, stop_btn, export_btn])
+        theme_btn = theme_button(s.dark)
+        top_bar = Row(children=[Label("seed_label", "Seed:"), seed_box, run_all_btn, stop_btn, export_btn, theme_btn])
 
         stats = Panel(
             title="Cavern Metrics",

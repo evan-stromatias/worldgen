@@ -38,6 +38,7 @@ def main() -> None:
     parser.add_argument("--run-all", action="store_true", help="Generate the cave at start.")
     parser.add_argument("--3d", dest="three_d", action="store_true", help="Start in 3D Orbit view.")
     parser.add_argument("--fps", action="store_true", help="Start in 3D FPS camera view.")
+    parser.add_argument("--light", action="store_true", help="Start in light theme (dark by default).")
     parser.add_argument("--log", action="store_true", help="Open the log window from the start.")
     parser.add_argument(
         "--export-dialog",
@@ -62,6 +63,7 @@ def main() -> None:
     log = Log()
     with capture(log):
         theme = app.open_window(args.width, args.height, "subterranean cave generator", (900, 500))
+        theme.set_dark(not args.light)  # dark by default
         controller = CaveController(config, args.seed, args.out, log=log, theme=theme)
 
         try:

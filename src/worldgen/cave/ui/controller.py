@@ -56,7 +56,11 @@ class CaveController:
         self.out_dir = out_dir or Path("out") / f"cave-seed-{seed}"
         self.log = log or Log()
         self._log_seen = 0
-        self.theme = theme or Theme()
+        if theme is not None:
+            self.theme = theme
+        else:
+            self.theme = Theme()
+            self.theme.set_dark(True)
         self.export_format: CaveExportFormat = "npz"
         self._save_to: tuple[Path, CaveExportFormat] | None = None
 
@@ -91,6 +95,7 @@ class CaveController:
             min_passage=config.cavern.min_passage,
             water_table=config.hydrology.water_table,
             perimeter_wall=config.cavern.perimeter_wall,
+            dark=self.theme.dark,
         )
         self.screen = CaveScreen(self.shown, form=self._build_form_tree())
         self.manager = ScreenManager()
@@ -178,6 +183,7 @@ class CaveController:
             self.screen.refresh(self.shown, self._build_form_tree())
 
         # Update log news indicators and active log window
+        self.shown.dark = self.theme.dark
         news, errors = log_news(self.log, self._log_seen)
         self.shown.log_news, self.shown.log_errors = news, errors
         window = self._window(LOG)
@@ -299,6 +305,8 @@ class CaveController:
         assert cave is not None
         world_size = cave.config.world.size_cells * cave.config.world.cell_size
         fit = min(rw / world_size, rh / world_size) * self.zoom
+        if fit <= 0:
+            return
         dw = world_size * fit
         dh = world_size * fit
         ox = (rw - dw) / 2.0 + self.pan[0]
@@ -500,6 +508,10 @@ class CaveController:
             case ev.StopAll():
                 self.session.stop()
                 self._say("Stopping...")
+                return True
+            case ev.ThemeSwitched():
+                self.theme.set_dark(not self.theme.dark)
+                self.shown.dark = self.theme.dark
                 return True
             case ev.AddRule():
                 rules = self.recipe.get(("materials", "rules"))

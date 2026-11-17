@@ -48,6 +48,24 @@ def test_cave_controller_events(tmp_path: Path):
     cfg = parse_config(SMALL_CAVE)
     controller = CaveController(cfg, seed=7, out_dir=tmp_path / "ctrl_out")
 
+    # Dark theme by default
+    assert controller.theme.dark is True
+    assert controller.shown.dark is True
+
+    # Theme toggle event via button id
+    controller.handle([Event("cave_screen", "theme", True)])
+    assert controller.theme.dark is False
+    assert controller.shown.dark is False
+
+    controller.handle([Event("cave_screen", "theme", True)])
+    assert controller.theme.dark is True
+    assert controller.shown.dark is True
+
+    # Theme toggle event via ThemeSwitched
+    from worldgen.ui.view.events import ThemeSwitched
+    controller.act(ThemeSwitched())
+    assert controller.theme.dark is False
+
     # Mode events
     controller.handle([Event("cave_screen", "btn_mode_orbit", True)])
     assert controller.mode == "3d_orbit"
