@@ -131,7 +131,7 @@ class CaveRenderer:
         height: int,
         camera: rl.Camera3D,
     ) -> rl.Texture | None:
-        """Render 3D orbit view with ambient bounce and downward directional light."""
+        """Render 3D orbit view with ambient bounce and directional light."""
         target = self._ensure_target(width, height)
         if target is None or self.material is None:
             return None
@@ -139,12 +139,9 @@ class CaveRenderer:
         rl.clear_background(rl.Color(16, 18, 22, 255))
 
         # Shader uniforms: Orbit mode
-        self._set_uniform("ambientColor", [0.25, 0.25, 0.28], VEC3)
-        self._set_uniform("lightPos", [camera.position.x, camera.position.y, camera.position.z], VEC3)
+        self._set_uniform("ambientColor", [0.45, 0.45, 0.48], VEC3)
         self._set_uniform("lightDir", [-0.3, 1.0, -0.4], VEC3)
         self._set_uniform("lightColor", [0.85, 0.82, 0.78], VEC3)
-        self._set_uniform("lightCutoff", [0.0], FLOAT)
-        self._set_uniform("isFps", [0.0], FLOAT)
 
         rl.begin_mode_3d(camera)
         mat = rl.matrix_identity()
@@ -163,12 +160,12 @@ class CaveRenderer:
         height: int,
         fps_cam: FpsCamera,
     ) -> rl.Texture | None:
-        """Render 3D first-person interior view with camera flashlight."""
+        """Render 3D first-person interior view with clean global illumination."""
         target = self._ensure_target(width, height)
         if target is None or self.material is None:
             return None
         rl.begin_texture_mode(target)
-        rl.clear_background(rl.Color(8, 9, 12, 255))
+        rl.clear_background(rl.Color(20, 22, 28, 255))
 
         pos = fps_cam.position
         target_pos = fps_cam.target
@@ -180,15 +177,10 @@ class CaveRenderer:
             rl.CameraProjection.CAMERA_PERSPECTIVE,
         )
 
-        fwd = fps_cam.forward
-
-        # Shader uniforms: FPS flashlight
-        self._set_uniform("ambientColor", [0.15, 0.16, 0.18], VEC3)  # subtle ambient bounce
-        self._set_uniform("lightPos", [float(pos[0]), float(pos[1]), float(pos[2])], VEC3)
-        self._set_uniform("lightDir", [float(fwd[0]), float(fwd[1]), float(fwd[2])], VEC3)
-        self._set_uniform("lightColor", [1.1, 1.05, 0.95], VEC3)  # warm beam
-        self._set_uniform("lightCutoff", [0.82], FLOAT)  # ~35° cone
-        self._set_uniform("isFps", [1.0], FLOAT)
+        # Shader uniforms: Global inspectable lighting
+        self._set_uniform("ambientColor", [0.45, 0.45, 0.48], VEC3)
+        self._set_uniform("lightDir", [0.3, 0.9, 0.4], VEC3)
+        self._set_uniform("lightColor", [0.85, 0.82, 0.78], VEC3)
 
         rl.begin_mode_3d(camera)
         mat = rl.matrix_identity()

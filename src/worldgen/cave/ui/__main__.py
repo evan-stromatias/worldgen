@@ -17,6 +17,7 @@ from worldgen.cave.config import DEFAULT_CAVE_RECIPE, ConfigError, load_config
 from worldgen.cave.export import CAVE_EXPORT_FORMATS
 from worldgen.cave.ui import app
 from worldgen.cave.ui.controller import CaveController
+from worldgen.ui.model.log import Log, capture
 
 
 def main() -> None:
@@ -37,6 +38,12 @@ def main() -> None:
     parser.add_argument("--run-all", action="store_true", help="Generate the cave at start.")
     parser.add_argument("--3d", dest="three_d", action="store_true", help="Start in 3D Orbit view.")
     parser.add_argument("--fps", action="store_true", help="Start in 3D FPS camera view.")
+    parser.add_argument("--log", action="store_true", help="Open the log window from the start.")
+    parser.add_argument(
+        "--export-dialog",
+        action="store_true",
+        help="Open the Export cave dialog at start (for scripted screenshots).",
+    )
     parser.add_argument(
         "--screenshot",
         type=Path,
@@ -52,35 +59,46 @@ def main() -> None:
     except ConfigError as e:
         sys.exit(str(e))
 
-    theme = app.open_window(args.width, args.height, "subterranean cave generator", (900, 500))
-    controller = CaveController(config, args.seed, args.out, theme=theme)
+    log = Log()
+    with capture(log):
+        theme = app.open_window(args.width, args.height, "subterranean cave generator", (900, 500))
+        controller = CaveController(config, args.seed, args.out, log=log, theme=theme)
 
-    try:
-        controller.export_format = args.format
-        if args.fps:
-            controller.mode = "3d_fps"
-            controller.shown.mode = "3d_fps"
-        elif args.three_d:
-            controller.mode = "3d_orbit"
-            controller.shown.mode = "3d_orbit"
+        try:
+            controller.export_format = args.format
+            if args.fps:
+                controller.mode = "3d_fps"
+                controller.shown.mode = "3d_fps"
+            elif args.three_d:
+                controller.mode = "3d_orbit"
+                controller.shown.mode = "3d_orbit"
 
-        if args.run_all or args.screenshot:
-            # Synchronous run for instant screenshot or start
-            controller.session.run_sync()
-            controller.renderer.upload_meshes(
-                controller.session.mesh_arrays, controller.session.water_mesh_arrays
-            )
-            controller.renderer.upload_plan(controller.session.preview_image)
-            controller._update_metrics()
-            if controller.session.cave is not None:
-                pos, yaw, pitch = controller.session.cave.find_spawn_point()
-                controller.fps_camera.position = pos
-                controller.fps_camera.yaw = yaw
-                controller.fps_camera.pitch = pitch
+            if args.log:
+                controller.toggle_log()
 
-        app.run(controller, theme, args.screenshot)
-    finally:
-        app.close(controller, theme)
+            if args.export_dialog:
+                from worldgen.cave.ui.view.windows import SAVE_WORLD
+                from worldgen.ui.view import events as ev
+
+                controller.act(ev.DialogAsked(SAVE_WORLD))
+
+            if args.run_all or args.screenshot:
+                # Synchronous run for instant screenshot or start
+                controller.session.run_sync()
+                controller.renderer.upload_meshes(
+                    controller.session.mesh_arrays, controller.session.water_mesh_arrays
+                )
+                controller.renderer.upload_plan(controller.session.preview_image)
+                controller._update_metrics()
+                if controller.session.cave is not None:
+                    pos, yaw, pitch = controller.session.cave.find_spawn_point()
+                    controller.fps_camera.position = pos
+                    controller.fps_camera.yaw = yaw
+                    controller.fps_camera.pitch = pitch
+
+            app.run(controller, theme, args.screenshot)
+        finally:
+            app.close(controller, theme)
 
 
 if __name__ == "__main__":

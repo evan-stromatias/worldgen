@@ -18,7 +18,10 @@ from worldgen.generator.config import (
     ElevationSection,
     ErosionSection,
     Ground,
+    MountainsSection,
+    NoiseSection,
     Section,
+    WarpSection,
     WorldSection,
     config_errors,
 )
@@ -34,15 +37,15 @@ class CavernSection(Section):
     """Ceiling height and pillar clearance parameters."""
 
     clearance: float = Field(
-        default=18.0, gt=0, description="Nominal vertical distance between floor and ceiling, in metres."
+        default=40.0, gt=0, description="Nominal vertical distance between floor and ceiling, in metres."
     )
     ceiling_mode: Literal["inverted", "offset"] = Field(
         default="inverted",
         description="'inverted': floor relief is inverted (valleys become domes, ridges become stalactites); 'offset': ceiling mirrors floor offset upwards.",
     )
-    ceiling_scale: float = Field(default=1.0, gt=0, description="Ceiling relief scale factor.")
+    ceiling_scale: float = Field(default=0.75, gt=0, description="Ceiling relief scale factor.")
     min_passage: float = Field(
-        default=2.0, gt=0, description="Minimum clearance in metres for passable cavern; below this cells are solid rock pillars."
+        default=3.0, gt=0, description="Minimum clearance in metres for passable cavern; below this cells are solid rock pillars."
     )
     perimeter_wall: bool = Field(
         default=True, description="Whether perimeter boundary cells are sealed as solid rock walls."
@@ -55,16 +58,16 @@ class CaveHydrologySection(Section):
 
     enabled: bool = Field(default=True, description="Whether standing water / subterranean pools are present.")
     water_table: float = Field(
-        default=-2.0, description="Subterranean water table elevation in metres. Floor below this is submerged in pools/sumps."
+        default=-5.0, description="Subterranean water table elevation in metres. Floor below this is submerged in pools/sumps."
     )
 
 
 class CaveClimateSection(Section):
     """Depth-based temperature and dampness."""
 
-    temperature_base: float = Field(default=12.0, description="Ambient cave temperature at reference elevation, in °C.")
-    geothermal_gradient: float = Field(default=0.025, ge=0, description="Temperature increase with depth, °C per metre.")
-    ambient_humidity: float = Field(default=0.75, ge=0, le=1, description="Ambient relative humidity (0-1) in dry cavern chambers.")
+    temperature_base: float = Field(default=10.0, description="Ambient cave temperature at reference elevation, in °C.")
+    geothermal_gradient: float = Field(default=0.03, ge=0, description="Temperature increase with depth, °C per metre.")
+    ambient_humidity: float = Field(default=0.80, ge=0, le=1, description="Ambient relative humidity (0-1) in dry cavern chambers.")
 
 
 def default_material_rules() -> list[BiomeRule]:
@@ -73,37 +76,32 @@ def default_material_rules() -> list[BiomeRule]:
         BiomeRule(
             id="sump",
             when={"water": "lake"},
-            ground=Ground(color=(50, 70, 95), jitter=0.02),
-        ),
-        BiomeRule(
-            id="sediment",
-            when={"sediment": (0.3, 100.0)},
-            ground=Ground(color=(95, 80, 65), jitter=0.04),
+            ground=Ground(color=(45, 65, 90), jitter=0.02),
         ),
         BiomeRule(
             id="flowstone",
-            when={"slope": (45.0, 90.0)},
-            ground=Ground(color=(215, 210, 195), jitter=0.03),
-        ),
-        BiomeRule(
-            id="fungal_grotto",
-            when={"moisture": (0.85, 1.0), "temperature": (13.0, 40.0)},
-            ground=Ground(color=(65, 130, 90), jitter=0.06),
+            when={"slope": (40.0, 90.0)},
+            ground=Ground(color=(220, 215, 200), jitter=0.03),
         ),
         BiomeRule(
             id="crystal_vault",
-            when={"relief": (15.0, 100.0)},
-            ground=Ground(color=(175, 210, 225), jitter=0.05),
+            when={"relief": (35.0, 200.0)},
+            ground=Ground(color=(180, 215, 235), jitter=0.05),
+        ),
+        BiomeRule(
+            id="fungal_grotto",
+            when={"moisture": (0.85, 1.0), "temperature": (12.0, 40.0)},
+            ground=Ground(color=(60, 130, 85), jitter=0.06),
         ),
         BiomeRule(
             id="limestone",
-            ground=Ground(color=(135, 130, 125), jitter=0.05),
+            ground=Ground(color=(130, 125, 120), jitter=0.05),
         ),
     ]
 
 
 def default_materials() -> BiomesSection:
-    return BiomesSection(blend_width=0.08, relief_radius=60.0, rules=default_material_rules())
+    return BiomesSection(blend_width=0.08, relief_radius=40.0, rules=default_material_rules())
 
 
 def default_elevation() -> ElevationSection:
@@ -111,8 +109,17 @@ def default_elevation() -> ElevationSection:
         mask="continent",
         falloff=0.0,
         shore=0.08,
-        max_height=30.0,
-        sea_floor=-10.0,
+        max_height=120.0,
+        sea_floor=-20.0,
+        noise=NoiseSection(octaves=5, frequency=0.003, lacunarity=2.0, gain=0.5),
+        warp=WarpSection(strength=70.0, frequency=0.002),
+        mountains=MountainsSection(
+            enabled=True,
+            wavelength=250.0,
+            height=0.65,
+            coverage=0.40,
+            sharpness=1.8,
+        ),
     )
 
 

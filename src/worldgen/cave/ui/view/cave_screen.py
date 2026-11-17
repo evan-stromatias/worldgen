@@ -1,9 +1,13 @@
-"""Rayscreen interface spec for cavegen-ui: 2D plan / 3D orbit / 3D FPS views and parameter controls."""
+"""Rayscreen interface spec for cavegen-ui: interactive dual-pane view (viewport on left, stage form on right)."""
 
-from dataclasses import dataclass
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from rayscreen import (
     PAD,
+    SMALL,
     Button,
     Column,
     Fill,
@@ -13,11 +17,15 @@ from rayscreen import (
     Picture,
     Row,
     Screen,
-    Slider,
+    Scroll,
     Split,
     TextBox,
     Toggle,
 )
+from worldgen.ui.model.stages import Status
+
+if TYPE_CHECKING:
+    pass
 
 HALVES = "cave_halves"
 
@@ -28,29 +36,42 @@ class CaveShown:
 
     seed: str = "7"
     mode: str = "2d"  # "2d", "3d_orbit", "3d_fps"
+    cutaway: bool = False
     status: str = "Ready"
     readout: str = "Hover over cave for readout"
+    runnable: bool = True
+    stoppable: bool = False
     volume_m3: str = "—"
     passable_ratio: str = "—"
     min_clearance: str = "—"
     max_clearance: str = "—"
-    clearance: float = 18.0
+    clearance: float = 40.0
     ceiling_mode: str = "inverted"
-    min_passage: float = 2.0
-    water_table: float = -2.0
+    min_passage: float = 3.0
+    water_table: float = -5.0
     perimeter_wall: bool = True
-    cutaway: bool = False
+    statuses: dict[str, tuple[Status, str]] = field(default_factory=dict)
+    log_news: str = ""
+    log_errors: bool = False
 
 
 class CaveScreen(Screen):
     """The main window screen for cavegen-ui."""
 
-    def __init__(self, shown: CaveShown):
+    def __init__(self, shown: CaveShown, form: Column | None = None):
         self.picture = Picture("cave_view", fit="stretch", flipped=True, weight=1)
         self.shown = shown
-        super().__init__("cave_screen", self._build_tree(shown), margin=PAD)
+        self._form = form or Column(children=[])
+        super().__init__("cave_screen", self._build_tree(shown, self._form), margin=PAD)
 
-    def _build_tree(self, s: CaveShown) -> Node:
+    def refresh(self, s: CaveShown, form: Column | None = None) -> None:
+        """Update shown state and optional form tree."""
+        if form is not None:
+            self._form = form
+        self.shown = s
+        self.set_root(self._build_tree(s, self._form))
+
+    def _build_tree(self, s: CaveShown, form: Column) -> Node:
         # Left side: View toolbar + Picture + Status / Readout
         mode_2d = Toggle("btn_mode_2d", "2D Plan", active=(s.mode == "2d"))
         mode_orbit = Toggle("btn_mode_orbit", "3D Orbit", active=(s.mode == "3d_orbit"))
@@ -60,6 +81,9 @@ class CaveScreen(Screen):
         toolbar = Row(children=[mode_2d, mode_orbit, mode_fps, Fill(), cutaway_toggle])
         status_bar = Row(
             children=[
+                Button("log", "#15#Log"),
+                Label("log-news", s.log_news, size=SMALL, tone="error" if s.log_errors else "muted"),
+                Fill(weight=0, size=8.0),
                 Label("status_text", s.status, tone="muted"),
                 Fill(),
                 Label("readout_text", s.readout, size=13),
@@ -67,28 +91,13 @@ class CaveScreen(Screen):
         )
         left = Column(children=[toolbar, self.picture, status_bar], weight=1)
 
-        # Right side: Generation controls & Statistics
-        run_btn = Button("btn_run", "Run all")
-        export_btn = Button("btn_export", "Export cave")
-        top_bar = Row(children=[Label("seed_label", "Seed:"), TextBox("input_seed", s.seed, weight=1), run_btn, export_btn])
+        # Right side: Top action bar (Seed, Run all, Stop, Export cave) + Scrollable Stage Form + Collapsible Metrics
+        seed_box = TextBox("input_seed", s.seed, weight=1.0)
+        run_all_btn = Button("run-all", "#131#Run all", enabled=s.runnable)
+        stop_btn = Button("stop-all", "Stop", enabled=s.stoppable)
+        export_btn = Button("btn_export", "Export cave...")
+        top_bar = Row(children=[Label("seed_label", "Seed:"), seed_box, run_all_btn, stop_btn, export_btn])
 
-        # Controls panel
-        clearance_slider = Slider("slider_clearance", "Headroom", s.clearance, 4.0, 50.0)
-        min_passage_slider = Slider("slider_min_passage", "Min Passage", s.min_passage, 0.5, 8.0)
-        water_table_slider = Slider("slider_water_table", "Water Table", s.water_table, -10.0, 20.0)
-
-        controls = Panel(
-            title="Cavern Parameters",
-            child=Column(
-                children=[
-                    clearance_slider,
-                    min_passage_slider,
-                    water_table_slider,
-                ]
-            ),
-        )
-
-        # Statistics panel
         stats = Panel(
             title="Cavern Metrics",
             child=Column(
@@ -101,22 +110,7 @@ class CaveScreen(Screen):
             ),
         )
 
-        hints = Panel(
-            title="Navigation Hints",
-            child=Column(
-                children=[
-                    Label("h1", "2D: Drag to pan, wheel to zoom.", size=13),
-                    Label("h2", "3D Orbit: Drag to orbit, wheel to zoom.", size=13),
-                    Label("h3", "3D FPS: WASD walk, mouse look, wheel speed.", size=13),
-                ]
-            ),
-        )
+        scroll_form = Scroll("cave_form_scroll", form, weight=1)
+        right = Column(children=[top_bar, scroll_form, stats], weight=1)
 
-        right = Column(children=[top_bar, controls, stats, hints], width=420.0)
-
-        return Split(HALVES, left, right, ratio=0.7)
-
-    def refresh(self, s: CaveShown) -> None:
-        """Update screen tree when shown state changes."""
-        self.shown = s
-        self.set_root(self._build_tree(s))
+        return Split(HALVES, left, right, minimum=(320.0, 360.0), weight=1)

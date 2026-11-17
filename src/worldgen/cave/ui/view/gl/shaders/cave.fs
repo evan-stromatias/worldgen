@@ -6,11 +6,8 @@ in vec3 fragNormal;
 in vec4 fragColor;
 
 uniform vec3 ambientColor;
-uniform vec3 lightPos;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
-uniform float lightCutoff;
-uniform float isFps;
 
 out vec4 finalColor;
 
@@ -19,22 +16,14 @@ void main()
     vec3 N = normalize(fragNormal);
     vec3 albedo = fragColor.rgb;
 
-    if (isFps > 0.5) {
-        // FPS Flashlight attached to camera
-        vec3 toLight = lightPos - fragPosition;
-        float dist = length(toLight);
-        vec3 L = normalize(toLight);
-        float diff = max(dot(N, L), 0.0);
-        float atten = 1.0 / (1.0 + 0.03 * dist + 0.001 * dist * dist);
-        float cosTheta = dot(-L, normalize(lightDir));
-        float spot = clamp((cosTheta - lightCutoff) / (1.0 - lightCutoff), 0.0, 1.0);
-        vec3 lit = albedo * (ambientColor + lightColor * diff * atten * spot);
-        finalColor = vec4(lit, fragColor.a);
-    } else {
-        // Orbit directional sun + ambient
-        vec3 L = normalize(lightDir);
-        float diff = max(dot(N, L), 0.0);
-        vec3 lit = albedo * (ambientColor + lightColor * diff);
-        finalColor = vec4(lit, fragColor.a);
-    }
+    // Primary directional light bringing out relief and contours
+    vec3 L1 = normalize(lightDir);
+    float diff1 = max(dot(N, L1), 0.0);
+
+    // Secondary fill light from opposite angle to illuminate ceilings, undercuts and pillars
+    vec3 L2 = normalize(vec3(-lightDir.x, -lightDir.y * 0.5, -lightDir.z));
+    float diff2 = max(dot(N, L2), 0.0) * 0.4;
+
+    vec3 lit = albedo * (ambientColor + lightColor * diff1 + vec3(0.5, 0.5, 0.55) * diff2);
+    finalColor = vec4(lit, fragColor.a);
 }
