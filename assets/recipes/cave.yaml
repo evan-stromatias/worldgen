@@ -1,0 +1,66 @@
+# The default subterranean cave recipe: 1 km square at 1 m cells.
+# Floor is procedurally generated with gradient noise, erosion and terracing.
+# Ceiling is the floor rotated 180° with clearance and inverted dome/stalactite scaling.
+# Passing cells with clearance < min_passage become solid natural rock pillars.
+version: 0.3.0
+world:
+  cell_size: 1.0        # metres per cell
+  patch_cells: 128      # cells per patch side
+  size_cells: 1024      # cells per side
+  sea_level: 0.0        # reference sea level
+elevation:
+  mask: continent       # continent gives continuous subterranean floor
+  falloff: 0.0          # 0 = floor to the edges
+  shore: 0.08
+  max_height: 30.0      # vertical relief of floor hills
+  sea_floor: -10.0
+  noise:
+    octaves: 6
+    frequency: 0.003
+    lacunarity: 2.0
+    gain: 0.5
+  warp:
+    strength: 60.0
+    frequency: 0.002
+  mountains:
+    enabled: false
+  terraces:
+    enabled: false
+erosion:
+  enabled: false
+cavern:
+  clearance: 18.0       # nominal vertical distance between floor and ceiling, metres
+  ceiling_mode: inverted # inverted: valleys become domes, ridges become stalactites; offset: direct offset
+  ceiling_scale: 1.0    # scale factor for ceiling relief
+  min_passage: 2.0      # below this clearance (metres), cells fuse into solid rock pillars
+  perimeter_wall: true  # seal outer boundaries as solid rock walls
+  wall_thickness: 2     # thickness of perimeter wall, in cells
+hydrology:
+  enabled: true
+  water_table: -2.0     # subterranean aquifer height, metres
+climate:
+  temperature_base: 12.0 # ambient cave temperature, °C
+  geothermal_gradient: 0.025 # °C per metre of depth
+  ambient_humidity: 0.75 # ambient relative humidity (0-1)
+materials:
+  blend_width: 0.08
+  relief_radius: 60.0
+  rules:
+  - id: sump
+    when: {water: lake}
+    ground: {color: [50, 70, 95], jitter: 0.02}
+  - id: sediment
+    when: {sediment: [0.3, 100.0]}
+    ground: {color: [95, 80, 65], jitter: 0.04}
+  - id: flowstone
+    when: {slope: [45.0, 90.0]}
+    ground: {color: [215, 210, 195], jitter: 0.03}
+  - id: fungal_grotto
+    when: {moisture: [0.85, 1.0], temperature: [13.0, 40.0]}
+    ground: {color: [65, 130, 90], jitter: 0.06}
+  - id: crystal_vault
+    when: {relief: [15.0, 100.0]}
+    ground: {color: [175, 210, 225], jitter: 0.05}
+  - id: limestone
+    ground: {color: [135, 130, 125], jitter: 0.05}
+client: {}
